@@ -12,7 +12,7 @@ export default function Header() {
       <div className="flex h-16 items-center justify-between px-6">
         {/* 左侧标题 */}
         <h1 className="text-lg font-semibold text-gray-900">
-          管理后台
+          
         </h1>
 
         {/* 右侧工具栏 */}

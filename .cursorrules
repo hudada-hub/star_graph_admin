@@ -18,6 +18,6 @@
 接口使用：next/server
 
 
-使用TypeORM开发数据库
+使用TypeORM开发数据库pgsql
 
 如果你了解了，请回复“我了解了”

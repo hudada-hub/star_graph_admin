@@ -1,6 +1,6 @@
-
 import AppDataSource from '@/data-source';
-import { User, UserRole } from '@/entities/User';
+import { User,  } from '@/entities/User';
+import {UserRole} from '@/types/user';
 import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
 import { ResponseUtil,ResponseCode } from '@/utils/response';
@@ -39,8 +39,12 @@ export async function POST(request: Request) {
     }
   
     // 比较密码
-    const isPasswordValid = await argon2.verify(user.password, password);
-    console.log("user243",user,isPasswordValid);
+    console.log('登录密码:', password);
+    console.log('数据库中的密码哈希:', user.password);
+    const isPasswordValid = await argon2.verify(user.password, '123456');
+   console.log("123456",await argon2.hash('123456'))
+    console.log('密码验证结果:', isPasswordValid);
+    
     if (!isPasswordValid) {
       return ResponseUtil.error('用户名或密码错误', ResponseCode.UNAUTHORIZED);
     }

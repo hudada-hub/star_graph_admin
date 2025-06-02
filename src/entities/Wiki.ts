@@ -54,15 +54,15 @@ export class Wiki {
         customJs?: string;
     }; // 其他设置
 
-    @Column({ default: true })
-    isActive: boolean = true;
+
 
     @Column({ 
         type: 'enum',
-        enum: ['pending', 'active', 'suspended'],
-        default: 'pending'
+        enum: ['pending', 'rejected', 'draft', 'published'],
+        default: 'pending',
+        comment: '状态：待审核、审核失败、待发布、已发布'
     })
-    status: string = 'pending';
+    status: 'pending' | 'rejected' | 'draft' | 'published' = 'draft';
 
     // 统计信息
     @Column({ default: 0 })

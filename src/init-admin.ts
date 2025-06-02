@@ -1,8 +1,8 @@
 // src/init-admin.ts
 import AppDataSource from '@/data-source'; // 导入数据源
-import { User, UserRole } from '@/entities/User'; // 导入 Admin 实体
+import { User } from '@/entities/User'; // 导入 Admin 实体
 import argon2 from 'argon2'; // 用于密码哈希
-
+import { UserRole } from '@/types/user';
 export default async function initializeAdmin() {
   try {
     // 确保数据库连接已初始化
@@ -19,6 +19,8 @@ export default async function initializeAdmin() {
       // 创建新的超级管理员
       const hashedPassword = await argon2.hash('123456');
       const admin = userRepository.create({
+
+
         username: 'admin',
         password: hashedPassword,
         email: 'admin@example.com',

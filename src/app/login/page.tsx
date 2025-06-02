@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { request, setToken, getToken } from '@/utils/request';
-import { LoginResponse } from '@/types/api';
+import { ApiResponse } from '@/utils/response';
+import { LoginRequest, LoginResponseData } from '@/types/auth';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -15,7 +16,7 @@ const LoginPage: React.FC = () => {
   useEffect(() => {
     const token = getToken();
     if (token) {
-      router.push('/admin/dashboard');
+      router.push('/dashboard');
     }
   }, [router]);
 
@@ -25,9 +26,14 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
   
     try {
-      const response = await request<LoginResponse>('/login', {
+      const loginData: LoginRequest = {
+        username,
+        password
+      };
+
+      const response = await request<LoginResponseData>('/login', {
         method: 'POST',
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify(loginData),
       });
   
       if (response.code === 0 && response.data) {

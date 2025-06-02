@@ -9,6 +9,12 @@ import {
   BookOpenIcon,
   Cog6ToothIcon 
 } from '@heroicons/react/24/outline';
+import { Metadata } from 'next';
+// 这会使这个布局成为一个新的根布局
+// export const metadata: Metadata = {
+//   title: 'Wiki管理系统',
+//   description: 'Wiki管理后台',
+// }
 
 // 定义功能卡片类型
 type FeatureCard = {

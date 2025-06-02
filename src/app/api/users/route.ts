@@ -1,14 +1,15 @@
 import { NextRequest } from 'next/server';
 import { ResponseUtil } from '@/utils/response';
 import AppDataSource from '@/data-source';
-import { User, UserRole } from '@/entities/User';
+import { User } from '@/entities/User';
 import { verifyAuth } from '@/utils/auth';
-
+import {UserRole} from '@/types/user';
 // 获取用户列表
 export async function GET(request: NextRequest) {
   try {
     // 验证管理员权限
     const authResult = await verifyAuth(request);
+    console.log('authResult',authResult);
     if (!authResult?.user?.id) {
       return ResponseUtil.error('未登录或登录已过期');
     }
@@ -32,6 +33,9 @@ export async function GET(request: NextRequest) {
         createdAt: true,
         lastLoginAt: true,
         loginCount: true
+      },
+      where: {
+        role: UserRole.USER // 只查询普通用户
       },
       order: {
         createdAt: 'DESC'

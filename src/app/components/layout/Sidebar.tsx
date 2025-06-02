@@ -7,7 +7,8 @@ import {
   UsersIcon, 
   BookOpenIcon,
   Cog6ToothIcon,
-  ArrowLeftOnRectangleIcon 
+  ArrowLeftOnRectangleIcon,
+  UserGroupIcon 
 } from '@heroicons/react/24/outline';
 
 // 定义菜单项类型
@@ -21,6 +22,7 @@ type MenuItem = {
 const menuItems: MenuItem[] = [
   { name: '仪表盘', href: '/dashboard', icon: HomeIcon },
   { name: '用户管理', href: '/users', icon: UsersIcon },
+  { name: '管理员管理', href: '/admins', icon: UserGroupIcon },
   { name: 'Wiki管理', href: '/wikis', icon: BookOpenIcon },
   { name: '系统设置', href: '/settings', icon: Cog6ToothIcon },
 ];
@@ -44,7 +46,7 @@ export default function Sidebar() {
       {/* Logo区域 */}
       <div className="flex h-16 items-center justify-center border-b">
         <Link href="/dashboard" className="text-xl font-bold text-gray-800">
-          Wiki管理系统
+          星图Wiki管理系统
         </Link>
       </div>
 

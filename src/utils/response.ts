@@ -21,35 +21,55 @@ export enum ResponseCode {
   // 响应工具类
   export class ResponseUtil {
     // 成功响应
-    static success<T>(data?: T, message: string = '操作成功'): NextResponse {
+    static success<T>(data: T, message: string = 'success') {
       return NextResponse.json({
-        code: ResponseCode.SUCCESS,
+        code: 0,
         message,
         data,
       });
     }
   
     // 错误响应
-    static error(message: string = '操作失败', code: ResponseCode = ResponseCode.ERROR): NextResponse {
+    static error(message: string = 'error', code: number = 1) {
       return NextResponse.json({
         code,
         message,
-      }, { status: code >= 400 ? code : 200 });
+        data: null,
+      });
     }
   
-    // 未授权响应
-    static unauthorized(message: string = '未授权'): NextResponse {
+    // 无权限响应
+    static forbidden(message: string = '无权访问') {
       return NextResponse.json({
-        code: ResponseCode.UNAUTHORIZED,
+        code: 403,
         message,
+        data: null,
+      }, { status: 403 });
+    }
+  
+    // 未认证响应
+    static unauthorized(message: string = '未登录') {
+      return NextResponse.json({
+        code: 401,
+        message,
+        data: null,
       }, { status: 401 });
     }
   
-    // 服务器错误响应
-    static serverError(message: string = '服务器错误'): NextResponse {
+    // 参数错误响应
+    static badRequest(message: string = '请求参数错误') {
       return NextResponse.json({
-        code: ResponseCode.SERVER_ERROR,
+        code: 400,
+        message
+      }, { status: 400 });
+    }
+  
+    // 资源不存在响应
+    static notFound(message: string = '资源不存在') {
+      return NextResponse.json({
+        code: 404,
         message,
-      }, { status: 500 });
+        data: null,
+      }, { status: 404 });
     }
   }

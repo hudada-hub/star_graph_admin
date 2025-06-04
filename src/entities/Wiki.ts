@@ -16,6 +16,9 @@ export class Wiki {
     @PrimaryGeneratedColumn()
     id!: number;
 
+    @Column({ default: false })
+    isMyCustomWiki: boolean = false;//是否是自己自定义的wiki
+    
     @Column({ length: 100, unique: true })
     @Index()
     name!: string; // wiki 名称，唯一

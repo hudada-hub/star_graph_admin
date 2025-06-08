@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { BellIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import Swal from 'sweetalert2';
 
 export default function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -35,7 +36,7 @@ export default function Header() {
 
             {/* 下拉菜单 */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5">
+              <div className="z-[50] absolute right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5">
                 <Link
                   href="/profile"
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -50,8 +51,22 @@ export default function Header() {
                 </Link>
                 <button
                   onClick={() => {
-                    localStorage.removeItem('token');
-                    window.location.href = '/login';
+                    // 处理退出登录
+                    Swal.fire({
+                      title: '退出确认',
+                      text: '确定要退出登录吗？',
+                      icon: 'warning',
+                      showCancelButton: true,
+                      confirmButtonText: '确定',
+                      cancelButtonText: '取消',
+                      confirmButtonColor: '#d33',
+                      cancelButtonColor: '#3085d6',
+                    }).then((result) => {
+                      if (result.isConfirmed) {
+                        localStorage.removeItem('token');
+                        window.location.href = '/login';
+                      }
+                    });
                   }}
                   className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
                 >

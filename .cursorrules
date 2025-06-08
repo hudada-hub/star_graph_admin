@@ -14,9 +14,13 @@
 
 
 加密禁用bcrypt，使用argon2
-
+接口请求使用/src/utils/request.ts
 接口使用：next/server
 
+/src/data-source.ts 是数据库连接文件，这个路径不要修改
+UI框架使用antd框架
+
+token不使用cookie，使用localStorage
 
 使用TypeORM开发数据库pgsql
 

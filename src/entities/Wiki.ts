@@ -19,12 +19,12 @@ export class Wiki {
     @Column({ default: false })
     isMyCustomWiki: boolean = false;//是否是自己自定义的wiki
 
-
     @Column({ default: 0 })
     hot: number = 0;//热度
 
-    @Column({ default: 0 })
-    viewCount: number = 0;//浏览量
+ 
+
+
 
     @Column({ length: 100, unique: true })
     @Index()

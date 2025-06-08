@@ -7,7 +7,10 @@ import {
   DocumentCheckIcon,
   ClockIcon 
 } from '@heroicons/react/24/outline';
+import { Line } from '@ant-design/plots';
 import AdminLayout from '@/app/components/layout/AdminLayout';
+import { request } from '@/utils/request';
+import dayjs from 'dayjs';
 
 // 定义统计卡片类型
 type StatCard = {
@@ -18,54 +21,148 @@ type StatCard = {
   trend: 'up' | 'down';
 };
 
+interface DashboardData {
+  stats: StatCard[];
+  trends: {
+    dailyViews: Array<{ date: string; value: number }>;
+    dailyWikis: Array<{ date: string; value: number }>;
+  };
+}
+
 export default function DashboardPage() {
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<StatCard[]>([
     { 
       name: '总用户数', 
       value: 0, 
       icon: UsersIcon,
-      change: 12,
+      change: 0,
       trend: 'up'
     },
     { 
       name: 'Wiki数量', 
       value: 0, 
       icon: BookOpenIcon,
-      change: 5,
+      change: 0,
       trend: 'up'
     },
     { 
       name: '待审核', 
       value: 0, 
       icon: DocumentCheckIcon,
-      change: 3,
-      trend: 'down'
+      change: 0,
+      trend: 'up'
     },
     { 
       name: '今日活跃', 
       value: 0, 
       icon: ClockIcon,
-      change: 8,
+      change: 0,
       trend: 'up'
     },
   ]);
+  const [trends, setTrends] = useState<DashboardData['trends']>({
+    dailyViews: [],
+    dailyWikis: []
+  });
 
   // 获取统计数据
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const response = await request<DashboardData>('/dashboard/stats', {
+        method: 'GET',
+      });
+      if (response.code === 0 && response.data) {
+        const { stats: newStats, trends: newTrends } = response.data;
+        setStats(stats.map((stat, index) => ({
+          ...stat,
+          value: newStats[index].value,
+          change: parseFloat(String(newStats[index].change)),
+          trend: newStats[index].trend,
+        })));
+        setTrends(newTrends);
+      }
+    } catch (error) {
+      console.error('获取统计数据失败:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // TODO: 从API获取实际数据
-    setStats(prev => prev.map(stat => ({
-      ...stat,
-      value: Math.floor(Math.random() * 1000)
-    })));
+    fetchStats();
   }, []);
+
+  // 活跃用户趋势图配置
+  const viewsConfig = {
+    data: trends.dailyViews,
+    xField: 'date',
+    yField: 'value',
+    smooth: true,
+    meta: {
+      date: {
+        formatter: (v: string) => dayjs(v).format('MM-DD'),
+      },
+      value: {
+        formatter: (v: number) => `${v}次`,
+      },
+    },
+    tooltip: {
+      formatter: (datum: any) => {
+        return { name: '浏览量', value: `${datum.value}次` };
+      },
+    },
+    point: {
+      size: 5,
+      shape: 'diamond',
+      style: {
+        fill: 'white',
+        stroke: '#5B8FF9',
+        lineWidth: 2,
+      },
+    },
+  };
+
+  // Wiki创建趋势图配置
+  const wikiConfig = {
+    data: trends.dailyWikis,
+    xField: 'date',
+    yField: 'value',
+    smooth: true,
+    meta: {
+      date: {
+        formatter: (v: string) => dayjs(v).format('MM-DD'),
+      },
+      value: {
+        formatter: (v: number) => `${v}个`,
+      },
+    },
+    tooltip: {
+      formatter: (datum: any) => {
+        return { name: '创建数', value: `${datum.value}个` };
+      },
+    },
+    point: {
+      size: 5,
+      shape: 'diamond',
+      style: {
+        fill: 'white',
+        stroke: '#5AD8A6',
+        lineWidth: 2,
+      },
+    },
+  };
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <h1 className="text-2xl font-semibold text-gray-900">仪表盘</h1>
-        <p className="mt-2 text-sm text-gray-700">
-          查看网站的关键指标和统计数据
-        </p>
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">仪表盘</h1>
+          <p className="mt-2 text-sm text-gray-700">
+            查看网站的关键指标和统计数据
+          </p>
+        </div>
 
         {/* 统计卡片网格 */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -88,12 +185,14 @@ export default function DashboardPage() {
                         <div className="text-2xl font-semibold text-gray-900">
                           {stat.value}
                         </div>
-                        <div className={`ml-2 flex items-baseline text-sm font-semibold ${
-                          stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {stat.trend === 'up' ? '↑' : '↓'}
-                          {stat.change}%
-                        </div>
+                        {stat.change !== 0 && (
+                          <div className={`ml-2 flex items-baseline text-sm font-semibold ${
+                            stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {stat.trend === 'up' ? '↑' : '↓'}
+                            {Math.abs(stat.change)}%
+                          </div>
+                        )}
                       </div>
                     </dd>
                   </dl>
@@ -106,17 +205,19 @@ export default function DashboardPage() {
         {/* 图表区域 */}
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* 活跃用户趋势图 */}
-          <div className="min-h-96 rounded-lg bg-white p-6 shadow">
-            <h3 className="text-lg font-medium text-gray-900">活跃用户趋势</h3>
-            {/* TODO: 添加图表组件 */}
-            <div className="mt-4 h-80 bg-gray-50" />
+          <div className="rounded-lg bg-white p-6 shadow">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">活跃用户趋势</h3>
+            <div className="h-80">
+              <Line {...viewsConfig} />
+            </div>
           </div>
 
           {/* Wiki创建趋势图 */}
-          <div className="min-h-96 rounded-lg bg-white p-6 shadow">
-            <h3 className="text-lg font-medium text-gray-900">Wiki创建趋势</h3>
-            {/* TODO: 添加图表组件 */}
-            <div className="mt-4 h-80 bg-gray-50" />
+          <div className="rounded-lg bg-white p-6 shadow">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Wiki创建趋势</h3>
+            <div className="h-80">
+              <Line {...wikiConfig} />
+            </div>
           </div>
         </div>
       </div>

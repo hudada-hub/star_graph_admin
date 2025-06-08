@@ -15,10 +15,7 @@ export async function POST(request: Request) {
       return ResponseUtil.error('用户名和密码不能为空', ResponseCode.ERROR);
     }
 
-    // 连接到数据库
-    if (!AppDataSource.isInitialized) {
-      await AppDataSource.initialize();
-    }
+  
 
     // 查找用户
     const userRepository = AppDataSource.getRepository(User);

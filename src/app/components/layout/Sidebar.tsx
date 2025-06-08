@@ -1,5 +1,5 @@
 'use client';
-
+import Swal from 'sweetalert2';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -8,7 +8,9 @@ import {
   BookOpenIcon,
   Cog6ToothIcon,
   ArrowLeftOnRectangleIcon,
-  UserGroupIcon 
+  UserGroupIcon,
+  DocumentTextIcon,
+  FolderIcon
 } from '@heroicons/react/24/outline';
 
 // 定义菜单项类型
@@ -24,6 +26,8 @@ const menuItems: MenuItem[] = [
   { name: '用户管理', href: '/users', icon: UsersIcon },
   { name: '管理员管理', href: '/admins', icon: UserGroupIcon },
   { name: 'Wiki管理', href: '/wikis', icon: BookOpenIcon },
+  { name: '文章管理', href: '/articles', icon: DocumentTextIcon },
+  { name: '文章分类', href: '/article-categories', icon: FolderIcon },
   { name: '系统设置', href: '/settings', icon: Cog6ToothIcon },
 ];
 
@@ -35,11 +39,7 @@ export default function Sidebar() {
     return pathname.startsWith(href);
   };
 
-  // 处理退出登录
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
-  };
+
 
   return (
     <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg">
@@ -71,16 +71,6 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      {/* 底部退出按钮 */}
-      <div className="absolute bottom-0 w-full border-t p-4">
-        <button
-          onClick={handleLogout}
-          className="flex w-full items-center rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-        >
-          <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5" />
-          退出登录
-        </button>
-      </div>
     </div>
   );
 } 

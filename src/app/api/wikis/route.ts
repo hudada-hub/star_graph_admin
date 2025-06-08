@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { initializeDatabase } from '@/data-source';
 import { Wiki } from '@/entities/Wiki';
 import { IsNull } from 'typeorm';
-import { getSessionFromToken } from '@/utils/auth';
+import { getSessionFromToken, hasSuperAdminAccess } from '@/utils/auth';
 
 
 // 定义用户角色
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   try {
     // 验证管理员权限
     const session = await getSessionFromToken(request);
-    if (!session || session.role !== UserRole.SUPER_ADMIN) {
+    if (!hasSuperAdminAccess(session)) {
       return NextResponse.json({
         code: 403,
         message: '无权访问',
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
   try {
     // 验证管理员权限
     const session = await getSessionFromToken(request);
-    if (!session || session.role !== UserRole.SUPER_ADMIN) {
+    if (!hasSuperAdminAccess(session)) {
       return NextResponse.json({
         code: 403,
         message: '无权访问',
@@ -85,7 +85,9 @@ export async function POST(request: NextRequest) {
     // 创建Wiki
     const wiki = new Wiki();
     Object.assign(wiki, createData);
-    wiki.creatorId = session.userId;
+    if (session) {
+      wiki.creatorId = session.userId;
+    }
     await wikiRepository.save(wiki);
 
     return NextResponse.json({

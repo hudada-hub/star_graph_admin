@@ -11,9 +11,16 @@ import { Wiki } from './Wiki';
 
 // 用户角色枚举
 export enum UserRole {
-  SUPER_ADMIN = 'super_admin',  // 超级管理员
-  REVIEWER = 'reviewer',        // 审核员
-  USER = 'user'                 // 普通用户
+  USER = 'user',
+  REVIEWER = 'reviewer',
+  SUPER_ADMIN = 'super_admin'
+}
+
+// 用户状态枚举
+export enum UserStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  BANNED = 'banned'
 }
 
 @Entity('users')
@@ -21,52 +28,43 @@ export class User {
     @PrimaryGeneratedColumn()
     id!: number;
   
-    @Column({ length: 100, unique: true })
+    @Column({ length: 50, unique: true })
     username!: string;
   
-    @Column({ length: 100 })
+    @Column({ select: false,nullable: false,length:100 }) // 默认查询时不返回密码
     password!: string;
   
     @Column({ length: 100, unique: true })
     email!: string;
   
-    @Column({ length: 100, nullable: true })
+    @Column({ length: 50, nullable: true })
     nickname?: string;
   
-    @Column({ type: 'text', nullable: true })
+    @Column({ nullable: true })
     avatar?: string;
   
-    @Column({ default: true })
-    isEnabled!: boolean;
-  
-    @Column({ length: 20, nullable: true })
-    phone?: string;
-  
-    @Column({ length: 100, nullable: true })
+    @Column({ nullable: true })
     avatarOriginal?: string;
   
-    @Column({ 
-      type: 'enum',
-      enum: ['active', 'inactive', 'banned'],
-      default: 'active'
-    })
-    status: string = 'active';
-
     @Column({
       type: 'enum',
       enum: UserRole,
       default: UserRole.USER
     })
-    role: UserRole = UserRole.USER;
+    role!: UserRole;
+  
+    @Column({
+      type: 'enum',
+      enum: UserStatus,
+      default: UserStatus.ACTIVE
+    })
+    status!: UserStatus;
   
     @Column({ default: false })
-    isAdmin: boolean = false;
+    isDisabled: boolean = false;
   
     @Column({ default: 0 })
-    loginCount: number = 0;
-  
-    @Column({ default: true })
-    isActive: boolean = true;
+    loginCount!: number;
   
     @Column({ type: 'timestamp', nullable: true })
     lastLoginAt?: Date;
@@ -105,5 +103,10 @@ export class User {
     // 判断用户是否有管理权限（超级管理员或审核员）
     hasManagementAccess(): boolean {
       return this.role === UserRole.SUPER_ADMIN || this.role === UserRole.REVIEWER;
+    }
+
+    // 判断用户是否处于活跃状态
+    isActive(): boolean {
+      return this.status === UserStatus.ACTIVE;
     }
 }

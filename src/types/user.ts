@@ -1,10 +1,9 @@
 // 用户角色枚举
 export enum UserRole {
-  SUPER_ADMIN = 'super_admin',
-  REVIEWER = 'reviewer',
-  USER = 'user'
+  USER = 'USER',
+  REVIEWER = 'REVIEWER',
+  SUPER_ADMIN = 'SUPER_ADMIN'
 }
-
 // 用户状态枚举
 export enum UserStatus {
   ACTIVE = 'active',

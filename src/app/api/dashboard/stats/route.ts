@@ -1,75 +1,52 @@
 import { NextResponse } from 'next/server';
-import { initializeDatabase } from '@/data-source';
-import { User } from '@/entities/User';
-import { Article } from '@/entities/Article';
-import { Wiki } from '@/entities/Wiki';
-import { getServerSession } from '@/utils/session';
-import { LessThan } from 'typeorm';
+import prisma from '@/lib/prisma';
 import dayjs from 'dayjs';
 
 export async function GET() {
   try {
-   
-
-    const dataSource = await initializeDatabase();
-    
     // 获取用户总数
-    const userCount = await dataSource.getRepository(User).count();
+    const userCount = await prisma.user.count();
 
     // 获取Wiki总数
-    const wikiCount = await dataSource.getRepository(Wiki).count();
+    const wikiCount = await prisma.wiki.count();
 
     // 获取待审核的文章数量
-    const pendingArticles = await dataSource.getRepository(Article).count({
+    const pendingArticles = await prisma.article.count({
       where: { isPublished: false }
     });
 
     // 获取今日活跃数据（通过文章浏览量统计）
     const today = dayjs().startOf('day').toDate();
-    const todayViews = await dataSource
-      .getRepository(Article)
-      .createQueryBuilder('article')
-      .where('article.updatedAt >= :today', { today })
-      .select('SUM(article.viewCount)', 'totalViews')
-      .getRawOne();
+    const todayViews = await prisma.article.aggregate({
+      where: { updatedAt: { gte: today } },
+      _sum: { viewCount: true }
+    });
 
     // 获取最近7天的用户活跃趋势
     const sevenDaysAgo = dayjs().subtract(6, 'day').startOf('day').toDate();
-    const dailyViews = await dataSource
-      .getRepository(Article)
-      .createQueryBuilder('article')
-      .where('article.updatedAt >= :sevenDaysAgo', { sevenDaysAgo })
-      .select([
-        'DATE(article.updatedAt) as date',
-        'SUM(article.viewCount) as views'
-      ])
-      .groupBy('DATE(article.updatedAt)')
-      .getRawMany();
+    const dailyViews = await prisma.$queryRaw`
+      SELECT DATE("updatedAt") as date, SUM("viewCount") as views
+      FROM "Article"
+      WHERE "updatedAt" >= ${sevenDaysAgo}
+      GROUP BY DATE("updatedAt")
+    `;
 
     // 获取最近7天的Wiki创建趋势
-    const dailyWikis = await dataSource
-      .getRepository(Wiki)
-      .createQueryBuilder('wiki')
-      .where('wiki.createdAt >= :sevenDaysAgo', { sevenDaysAgo })
-      .select([
-        'DATE(wiki.createdAt) as date',
-        'COUNT(*) as count'
-      ])
-      .groupBy('DATE(wiki.createdAt)')
-      .getRawMany();
+    const dailyWikis = await prisma.$queryRaw`
+      SELECT DATE("createdAt") as date, COUNT(*) as count
+      FROM "Wiki"
+      WHERE "createdAt" >= ${sevenDaysAgo}
+      GROUP BY DATE("createdAt")
+    `;
 
     // 计算环比增长
-    const previousUserCount = await dataSource.getRepository(User).count({
-      where: {
-        createdAt: LessThan(sevenDaysAgo)
-      }
+    const previousUserCount = await prisma.user.count({
+      where: { createdAt: { lt: sevenDaysAgo } }
     });
     const userGrowth = previousUserCount ? ((userCount - previousUserCount) / previousUserCount) * 100 : 0;
 
-    const previousWikiCount = await dataSource.getRepository(Wiki).count({
-      where: {
-        createdAt: LessThan(sevenDaysAgo)
-      }
+    const previousWikiCount = await prisma.wiki.count({
+      where: { createdAt: { lt: sevenDaysAgo } }
     });
     const wikiGrowth = previousWikiCount ? ((wikiCount - previousWikiCount) / previousWikiCount) * 100 : 0;
 
@@ -98,7 +75,7 @@ export async function GET() {
           },
           {
             name: '今日活跃',
-            value: todayViews?.totalViews || 0,
+            value: todayViews._sum.viewCount || 0,
             change: 0,
             trend: 'up'
           }
@@ -123,4 +100,4 @@ export async function GET() {
       data: null,
     }, { status: 500 });
   }
-} 
+}

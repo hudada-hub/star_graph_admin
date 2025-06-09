@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import AppDataSource from '@/data-source';
-import { ArticleCategory } from '@/entities/ArticleCategory';
+import prisma from '@/lib/prisma';
 
 // 获取单个分类
 export async function GET(
@@ -8,9 +7,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const categoryRepository = AppDataSource.getRepository(ArticleCategory);
-    const category = await categoryRepository.findOne({
-      where: { id: parseInt(params.id) },
+    const category = await prisma.articleCategory.findUnique({
+      where: { id: parseInt(params.id) }
     });
 
     if (!category) {
@@ -49,10 +47,10 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const categoryRepository = AppDataSource.getRepository(ArticleCategory);
     
-    let category = await categoryRepository.findOne({
-      where: { id: parseInt(params.id) },
+    // 检查分类是否存在
+    const category = await prisma.articleCategory.findUnique({
+      where: { id: parseInt(params.id) }
     });
 
     if (!category) {
@@ -66,13 +64,16 @@ export async function PUT(
       );
     }
 
-    category = categoryRepository.merge(category, body);
-    await categoryRepository.save(category);
+    // 更新分类
+    const updatedCategory = await prisma.articleCategory.update({
+      where: { id: category.id },
+      data: body
+    });
 
     return NextResponse.json({
       code: 0,
       message: '更新成功',
-      data: category,
+      data: updatedCategory,
     });
   } catch (error) {
     console.error('更新分类失败:', error);
@@ -93,10 +94,12 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const categoryRepository = AppDataSource.getRepository(ArticleCategory);
-    const category = await categoryRepository.findOne({
+    // 检查分类是否存在
+    const category = await prisma.articleCategory.findUnique({
       where: { id: parseInt(params.id) },
-      relations: ['articles'],
+      include: {
+        articles: true
+      }
     });
 
     if (!category) {
@@ -122,7 +125,11 @@ export async function DELETE(
       );
     }
 
-    await categoryRepository.remove(category);
+    // 删除分类
+    await prisma.articleCategory.delete({
+      where: { id: category.id }
+    });
+
     return NextResponse.json({
       code: 0,
       message: '删除成功',
@@ -139,4 +146,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-} 
+}

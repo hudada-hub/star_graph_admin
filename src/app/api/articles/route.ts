@@ -1,37 +1,34 @@
 import { NextResponse } from 'next/server';
-import AppDataSource, { initializeDatabase } from '@/data-source';
-import { Article } from '@/entities/Article';
-import { Like } from 'typeorm';
+import prisma from '@/lib/prisma';
 
 // 获取文章列表
 export async function GET(request: Request) {
   try {
-    await initializeDatabase();
     const { searchParams } = new URL(request.url);
     const title = searchParams.get('title');
     const status = searchParams.get('status');
     const categoryId = searchParams.get('categoryId');
 
-    const articleRepository = AppDataSource.getRepository(Article);
-    
     // 构建查询条件
-    const whereConditions: any = {};
+    const where: any = {};
     if (title) {
-      whereConditions.title = Like(`%${title}%`);
+      where.title = { contains: title };
     }
     if (status) {
-      whereConditions.status = status;
+      where.status = status;
     }
     if (categoryId) {
-      whereConditions.categoryId = parseInt(categoryId);
+      where.categoryId = parseInt(categoryId);
     }
 
-    const articles = await articleRepository.find({
-      where: whereConditions,
-      relations: ['category'],
-      order: {
-        createdAt: 'DESC',
+    const articles = await prisma.article.findMany({
+      where,
+      include: {
+        category: true
       },
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
 
     return NextResponse.json({
@@ -55,12 +52,11 @@ export async function GET(request: Request) {
 // 创建新文章
 export async function POST(request: Request) {
   try {
-    await initializeDatabase();
     const body = await request.json();
-    const articleRepository = AppDataSource.getRepository(Article);
     
-    const article = articleRepository.create(body);
-    await articleRepository.save(article);
+    const article = await prisma.article.create({
+      data: body
+    });
 
     return NextResponse.json({
       code: 0,
@@ -78,4 +74,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import { ResponseUtil } from '@/utils/response';
-import AppDataSource from '@/data-source';
-import { User } from '@/entities/User';
+import prisma from '@/lib/prisma';
 import { UserRole } from '@/types/user';
 import { verifyAuth } from '@/utils/auth';
 import * as argon2 from 'argon2';
@@ -11,22 +10,28 @@ export async function GET(request: NextRequest) {
   try {
     // 验证管理员权限
     const authResult = await verifyAuth(request);
-    if (!authResult.user?.isAdmin) {
+    if (!authResult.user?.role=== UserRole.SUPER_ADMIN) {
       return ResponseUtil.forbidden('无权限访问');
     }
 
-    // 获取用户仓库
-    const userRepository = AppDataSource.getRepository(User);
-
     // 查询管理员列表
-    const admins = await userRepository.find({
-      where: [
-        { role: UserRole.SUPER_ADMIN },
-        { role: UserRole.REVIEWER }
-      ],
-      select: ['id', 'username', 'email', 'role', 'status', 'createdAt', 'lastLoginAt', 'loginCount', 'lastLoginIp'],
-      order: {
-        createdAt: 'DESC'
+    const admins = await prisma.user.findMany({
+      where: {
+        role: { in: [UserRole.SUPER_ADMIN, UserRole.REVIEWER] }
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        lastLoginAt: true,
+        loginCount: true,
+        lastLoginIp: true
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     });
 
@@ -60,11 +65,8 @@ export async function POST(request: NextRequest) {
       return ResponseUtil.error('无效的角色类型');
     }
 
-    // 获取用户仓库
-    const userRepository = AppDataSource.getRepository(User);
-
     // 检查用户名是否已存在
-    const existingUser = await userRepository.findOne({
+    const existingUser = await prisma.user.findUnique({
       where: { username }
     });
 
@@ -73,19 +75,19 @@ export async function POST(request: NextRequest) {
     }
 
     // 创建新管理员
-    const newAdmin = new User();
-    newAdmin.username = username;
-    newAdmin.password = await argon2.hash(password);
-    newAdmin.email = email;
-    newAdmin.role = role;
-    newAdmin.status = status || 'active';
-
-    // 保存到数据库
-    await userRepository.save(newAdmin);
+    const newAdmin = await prisma.user.create({
+      data: {
+        username,
+        password: await argon2.hash(password),
+        email,
+        role,
+        status: status || 'ACTIVE'
+      }
+    });
 
     return ResponseUtil.success(null, '管理员创建成功');
   } catch (error) {
     console.error('创建管理员失败:', error);
     return ResponseUtil.error('创建管理员失败');
   }
-} 
+}

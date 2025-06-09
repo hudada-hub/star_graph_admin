@@ -1,14 +1,9 @@
 import { NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { initializeDatabase } from '@/data-source';
-import { User } from '@/entities/User';
-
+import prisma from '@/lib/prisma';
 import sharp from 'sharp';
 import { getSessionFromToken } from '@/utils/auth';
-
-// JWT密钥
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // 确保上传目录存在
 async function ensureUploadDir(dir: string) {
@@ -20,7 +15,6 @@ async function ensureUploadDir(dir: string) {
     }
   }
 }
-
 
 export async function POST(request: Request) {
   try {
@@ -90,12 +84,12 @@ export async function POST(request: Request) {
     await writeFile(filePath, processedImage);
 
     // 更新用户头像信息
-    const dataSource = await initializeDatabase();
-    const userRepository = dataSource.getRepository(User);
-    
-    await userRepository.update(session.userId, {
-      avatar: `/uploads/avatars/${fileName}`,
-      avatarOriginal: file.name, // 保存原始文件名
+    await prisma.user.update({
+      where: { id: session.userId },
+      data: {
+        avatar: `/uploads/avatars/${fileName}`,
+        avatarOriginal: file.name, // 保存原始文件名
+      }
     });
 
     return NextResponse.json({
@@ -113,4 +107,4 @@ export async function POST(request: Request) {
       data: null,
     }, { status: 500 });
   }
-} 
+}

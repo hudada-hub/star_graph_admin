@@ -1,16 +1,39 @@
 import { NextResponse } from 'next/server';
-import { initializeDatabase } from '@/data-source';
-import { ArticleCategory } from '@/entities/ArticleCategory';
+import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const dataSource = await initializeDatabase();
-    const categoryRepository = dataSource.getTreeRepository(ArticleCategory);
-    
-    // 获取树状结构的分类数据
-    const categories = await categoryRepository.findTrees({
-      relations: ['parent']
+    // 一次性获取所有分类数据，包含父分类和子分类关系
+    const allCategories = await prisma.articleCategory.findMany({
+      include: {
+        parent: true,
+        children: true
+      },
+      orderBy: {
+        name: 'asc' // 按名称排序
+      }
     });
+
+    // 使用Map提高查找效率
+    const categoryMap = new Map<number | null, any[]>();
+    allCategories.forEach(category => {
+      if (!categoryMap.has(category.parentId)) {
+        categoryMap.set(category.parentId, []);
+      }
+      categoryMap.get(category.parentId)?.push(category);
+    });
+
+    // 递归构建树状结构
+// 为 buildTree 函数添加返回类型批注，根据代码逻辑，返回值为包含文章分类对象的数组
+    const buildTree = (parentId: number | null): { [key: string]: any }[] => {
+      const nodes = categoryMap.get(parentId) || [];
+      return nodes.map(node => ({
+        ...node,
+        children: buildTree(node.id)
+      }));
+    };
+
+    const categories = buildTree(null);
 
     return NextResponse.json({
       code: 0,
@@ -25,4 +48,4 @@ export async function GET() {
       data: null,
     }, { status: 500 });
   }
-} 
+}

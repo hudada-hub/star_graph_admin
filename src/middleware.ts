@@ -34,6 +34,7 @@ export async function middleware(request: NextRequest) {
 
   // 从请求头获取token
   const token = getTokenFromHeader(request);
+  console.log('toekn0',token)
 
   // 如果没有token，返回未认证错误
   if (!token) {
@@ -52,16 +53,15 @@ export async function middleware(request: NextRequest) {
     }
     
     // 如果是页面请求，重定向到登录页
-    const url = new URL('/login', request.url);
-    url.searchParams.set('redirect', encodeURIComponent(pathname));
-    return NextResponse.redirect(url);
+    // const url = new URL('/login', request.url);
+    // url.searchParams.set('redirect', encodeURIComponent(pathname));
+    // return NextResponse.redirect(url);
   }
 
   // 如果有token，继续处理请求
   const response = NextResponse.next();
   
-  // 设置响应头，用于前端判断登录状态
-  response.headers.set('X-Auth-Token', token);
+  
   
   return response;
 }

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { ResponseUtil } from '@/utils/response';
-import AppDataSource from '@/data-source';
-import { User, UserRole } from '@/entities/User';
+import prisma from '@/lib/prisma';
+import { UserRole } from '@/types/user';
 import { verifyAuth } from '@/utils/auth';
 
 // 更新用户状态
@@ -17,15 +17,18 @@ export async function PUT(
     }
 
     // 检查是否为管理员
-    const userRepository = AppDataSource.getRepository(User);
-    const currentUser = await userRepository.findOneBy({ id: authResult.user.id });
+    const currentUser = await prisma.user.findUnique({
+      where: { id: authResult.user.id }
+    });
     
     if (!currentUser || (currentUser.role !== UserRole.SUPER_ADMIN && currentUser.role !== UserRole.REVIEWER)) {
       return ResponseUtil.error('没有权限访问');
     }
 
     // 获取要更新的用户
-    const targetUser = await userRepository.findOneBy({ id: parseInt(params.id) });
+    const targetUser = await prisma.user.findUnique({
+      where: { id: parseInt(params.id) }
+    });
     if (!targetUser) {
       return ResponseUtil.error('用户不存在');
     }
@@ -42,12 +45,21 @@ export async function PUT(
     }
 
     // 更新状态
-    targetUser.status = status;
-    await userRepository.save(targetUser);
+    const updatedUser = await prisma.user.update({
+      where: { id: targetUser.id },
+      data: { status },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        status: true
+      }
+    });
 
-    return ResponseUtil.success(targetUser, '状态更新成功');
+    return ResponseUtil.success(updatedUser, '状态更新成功');
   } catch (error) {
     console.error('更新用户状态失败:', error);
     return ResponseUtil.error('服务器错误');
   }
-} 
+}

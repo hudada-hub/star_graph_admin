@@ -56,7 +56,7 @@ export async function request<T = any>(
   }
 
   const data = await response.json();
-  console.log(data);
+
   if(data.code !== ResponseCode.SUCCESS){
     // 提示通知
     Notification.error(data.message);

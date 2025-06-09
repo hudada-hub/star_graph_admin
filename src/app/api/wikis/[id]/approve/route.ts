@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import { ResponseUtil } from '@/utils/response';
-import AppDataSource from '@/data-source';
-import { Wiki } from '@/entities/Wiki';
+import prisma from '@/lib/prisma';
 import { verifyAuth } from '@/utils/auth';
 import { UserRole } from '@/types/user';
 import { WikiStatus } from '@/types/wiki';
@@ -18,25 +17,23 @@ export async function POST(
       return ResponseUtil.forbidden('无权访问');
     }
 
-    // 获取Wiki
-    const wikiRepository = AppDataSource.getRepository(Wiki);
-    const wiki = await wikiRepository.findOne({
+    // 获取并更新Wiki状态
+    const wiki = await prisma.wiki.update({
       where: { id: parseInt(params.id) },
+      data: {
+        status: WikiStatus.DRAFT,
+        approvedAt: new Date(),
+        approvedById: user.user?.id
+      }
     });
 
     if (!wiki) {
       return ResponseUtil.notFound('Wiki不存在');
     }
 
-    // 更新Wiki状态，待发布
-    wiki.status = 'draft';
-    wiki.approvedAt = new Date();
-    wiki.approvedById = user.user?.id;
-    await wikiRepository.save(wiki);
-
     return ResponseUtil.success(wiki);
   } catch (error) {
     console.error('审核Wiki失败:', error);
     return ResponseUtil.error('审核Wiki失败');
   }
-} 
+}

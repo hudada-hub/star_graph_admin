@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Article {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(200)
+  content     String   @db.Text
+  summary     String   @db.Text
+  viewCount   Int      @default(0)
+  isPublished Boolean  @default(false)
+  tags        String[] 
+  categoryId  Int
+  category    ArticleCategory @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  Comment Comment[]
+}
+
+model ArticleCategory {
+  id       Int      @id @default(autoincrement())
+  name     String   @db.VarChar(100)
+
+  description String? @db.Text                // 新增：分类描述
+  sortOrder   Int     @default(0) @map("sort") // 排序权重，值越小越靠前
+
+  parentId Int?
+  parent   ArticleCategory? @relation("CategoryChildren", fields: [parentId], references: [id])
+  children ArticleCategory[] @relation("CategoryChildren")
+  articles Article[]
+  createdAt DateTime @default(now())          // 新增：创建时间
+  updatedAt DateTime @updatedAt              // 新增：更新时间
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  username       String    @unique @db.VarChar(50)
+  password       String    @db.VarChar(100)
+  email          String    @unique @db.VarChar(100)
+  nickname       String?   @db.VarChar(50)
+  avatar         String?
+  avatarOriginal String?
+  role           UserRole  @default(USER)
+  status         UserStatus @default(ACTIVE)
+  isDisabled     Boolean   @default(false)
+  loginCount     Int       @default(0)
+  lastLoginAt    DateTime?
+  lastLoginIp    String?   @db.VarChar(45)
+  bio            String?   @db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  wikis         Wiki[]
+  approvedWikis  Wiki[]    @relation("ApprovedWikis")
+
+  Comment Comment[]
+
+  ComponentData ComponentData[]
+
+  DetailPage DetailPage[]
+}
+
+enum UserRole {
+  USER
+  REVIEWER
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
+model Wiki {
+  id               Int      @id @default(autoincrement())
+  isMyCustomWiki   Boolean  @default(false)
+  hot              Int      @default(0)
+  name             String   @unique @db.VarChar(100)
+  subdomain        String   @unique @db.VarChar(100)
+  title            String   @db.VarChar(200)
+  description      String   @db.Text
+  keywords         String?  @db.Text
+  metaDescription  String?  @db.Text
+  backgroundImage  String?  @db.VarChar(200)
+  logo             String?  @db.VarChar(200)
+  primaryColor     String   @default("#000000") @db.VarChar(7)
+  settings         Json?
+  status           WikiStatus @default(PENDING)
+  pageCount        Int      @default(0)
+  contributorCount Int      @default(0)
+  viewCount        Int      @default(0)
+  creatorId        Int
+  creator          User     @relation(fields: [creatorId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  deletedAt        DateTime?
+  approvedAt       DateTime?
+  approvedById     Int?
+  approvedBy       User?    @relation("ApprovedWikis", fields: [approvedById], references: [id])
+  tags             String[]
+  customDomain     String?  @unique @db.VarChar(100)
+  contactInfo      String?  @db.VarChar(100)
+  applyReason      String?  @db.Text
+  license          String   @default("CC-BY-SA") @db.VarChar(50)
+
+  ComponentData ComponentData[]
+}
+
+enum WikiStatus {
+  PENDING
+  REJECTED
+  DRAFT
+  PUBLISHED
+}
+
+model Comment {
+  id          Int      @id @default(autoincrement())
+  content     String   @db.Text
+  createdAt   DateTime @default(now())
+  isActive    Boolean  @default(true)
+  likes       Int      @default(0)
+  isDeleted   Boolean  @default(false)
+  detailPage  DetailPage @relation(fields: [detailPageId], references: [id])
+  detailPageId Int
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  article     Article? @relation(fields: [articleId], references: [id])
+  articleId   Int?
+}
+
+model ComponentData {
+  id             Int      @id @default(autoincrement())
+  data           Json
+  editedAt       DateTime @default(now())
+  component      ComponentType @relation(fields: [componentId], references: [id])
+  componentId    Int
+  wiki           Wiki?    @relation(fields: [wikiId], references: [id])
+  wikiId         Int?
+  editor         User     @relation(fields: [editorId], references: [id])
+  editorId       Int
+  detailPage     DetailPage? @relation(fields: [detailPageId], references: [id])
+  detailPageId   Int?
+
+}
+
+model ComponentType {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(50)
+  description String?  @db.Text
+  config      Json
+  type        Int      // 1: 主页组件, 2: 详情页组件
+  templateId  Int?
+
+  ComponentData ComponentData[]
+}
+
+model DetailPage {
+  id          Int      @id @default(autoincrement())
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  description String?  @db.Text
+  creator     User     @relation(fields: [creatorId], references: [id])
+  creatorId   Int
+  template    DetailPageTemplate @relation(fields: [templateId], references: [id])
+  templateId  Int
+  componentDataId Int
+
+
+  ComponentData ComponentData[]
+
+  Comment Comment[]
+}
+
+model DetailPageTemplate {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(50)
+  description String?  @db.Text
+  config      Json
+
+  DetailPage DetailPage[]
+}
+
+
+model SystemSetting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

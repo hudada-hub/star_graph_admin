@@ -1,8 +1,8 @@
-import dataSource, { initializeDatabase } from '@/data-source';
-import { User, UserRole, UserStatus } from '@/entities/User';
+import { ResponseUtil, ResponseCode } from '@/utils/response';
 import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
-import { ResponseUtil, ResponseCode } from '@/utils/response';
+import prisma from '@/lib/prisma';
+import { UserRole } from '@/types/user';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
@@ -14,13 +14,19 @@ export async function POST(request: Request) {
       return ResponseUtil.error('用户名和密码不能为空', ResponseCode.ERROR);
     }
 
-
-
-    // 查找用户（包含密码字段）
-    const userRepository = dataSource.getRepository(User);
-    const user = await userRepository.findOne({
+    // 使用Prisma查找用户
+    const user = await prisma.user.findUnique({
       where: { username },
-      select: ['id', 'username', 'password', 'email', 'role', 'status', 'avatar']
+      select: {
+        id: true,
+        username: true,
+        password: true,
+        email: true,
+        role: true,
+        status: true,
+        avatar: true,
+        loginCount: true
+      }
     });
 
     if (!user) {
@@ -28,12 +34,12 @@ export async function POST(request: Request) {
     }
 
     // 验证用户角色
-    if (!user.hasManagementAccess()) {
+    if (!['SUPER_ADMIN', 'REVIEWER'].includes(user.role)) {
       return ResponseUtil.error('没有管理权限', ResponseCode.FORBIDDEN);
     }
 
     // 验证用户状态
-    if (!user.isActive()) {
+    if (user.status !== 'ACTIVE') {
       return ResponseUtil.error('账号已被禁用', ResponseCode.FORBIDDEN);
     }
 
@@ -44,12 +50,15 @@ export async function POST(request: Request) {
     }
 
     // 更新最后登录信息
-    await userRepository.update(user.id, {
-      lastLoginAt: new Date(),
-      loginCount: () => 'login_count + 1'
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        lastLoginAt: new Date(),
+        loginCount: (user.loginCount || 0) + 1
+      }
     });
 
-    // 生成 token，包含用户角色信息
+    // 生成 token
     const token = jwt.sign(
       {
         id: user.id,

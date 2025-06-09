@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import { ResponseUtil } from '@/utils/response';
-import AppDataSource from '@/data-source';
-import { Wiki } from '@/entities/Wiki';
+import prisma from '@/lib/prisma';
 import { verifyAuth } from '@/utils/auth';
 import { UserRole } from '@/types/user';
 import { UpdateWikiRequest } from '@/types/wiki';
@@ -19,10 +18,12 @@ export async function GET(
     }
 
     // 获取Wiki
-    const wikiRepository = AppDataSource.getRepository(Wiki);
-    const wiki = await wikiRepository.findOne({
+    const wiki = await prisma.wiki.findUnique({
       where: { id: parseInt(params.id) },
-      relations: ['creator', 'approvedBy'],
+      include: {
+        creator: true,
+        approvedBy: true
+      }
     });
 
     if (!wiki) {
@@ -51,19 +52,15 @@ export async function PUT(
     // 获取请求数据
     const updateData: UpdateWikiRequest = await request.json();
 
-    // 获取Wiki
-    const wikiRepository = AppDataSource.getRepository(Wiki);
-    const wiki = await wikiRepository.findOne({
+    // 更新Wiki
+    const wiki = await prisma.wiki.update({
       where: { id: parseInt(params.id) },
+      data: updateData
     });
 
     if (!wiki) {
       return ResponseUtil.notFound('Wiki不存在');
     }
-
-    // 更新Wiki
-    Object.assign(wiki, updateData);
-    await wikiRepository.save(wiki);
 
     return ResponseUtil.success(wiki);
   } catch (error) {
@@ -84,23 +81,19 @@ export async function DELETE(
       return ResponseUtil.forbidden('无权访问');
     }
 
-    // 获取Wiki
-    const wikiRepository = AppDataSource.getRepository(Wiki);
-    const wiki = await wikiRepository.findOne({
+    // 软删除Wiki
+    const wiki = await prisma.wiki.update({
       where: { id: parseInt(params.id) },
+      data: { deletedAt: new Date() }
     });
 
     if (!wiki) {
       return ResponseUtil.notFound('Wiki不存在');
     }
 
-    // 软删除Wiki
-    wiki.deletedAt = new Date();
-    await wikiRepository.save(wiki);
-
     return ResponseUtil.success(null, 'Wiki删除成功');
   } catch (error) {
     console.error('删除Wiki失败:', error);
     return ResponseUtil.error('删除Wiki失败');
   }
-} 
+}

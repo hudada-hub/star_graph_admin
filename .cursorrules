@@ -10,14 +10,14 @@
 4. 尽可能的封装组件，减少重复代码
 5. 使用语义化标签,进行seo优化
 6. 代码加入中文注释
-7. 数据库使用TypeORM开发
+7. 数据库使用prisma连接数据库
 
 
 加密禁用bcrypt，使用argon2
 接口请求使用/src/utils/request.ts
 接口使用：next/server
 
-/src/data-source.ts 是数据库连接文件，这个路径不要修改
+
 UI框架使用antd框架
 
 token不使用cookie，使用localStorage

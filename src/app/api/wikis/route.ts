@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { initializeDatabase } from '@/data-source';
-import { Wiki } from '@/entities/Wiki';
-import { IsNull } from 'typeorm';
+import prisma from '@/lib/prisma';
 import { getSessionFromToken, hasSuperAdminAccess } from '@/utils/auth';
-
-
-// 定义用户角色
-export enum UserRole {
-  USER = 'user',
-  ADMIN = 'admin',
-  SUPER_ADMIN = 'super_admin'
-}
-
 
 // 获取Wiki列表
 export async function GET(request: NextRequest) {
@@ -27,12 +16,10 @@ export async function GET(request: NextRequest) {
     }
 
     // 获取Wiki列表
-    const dataSource = await initializeDatabase();
-    const wikiRepository = dataSource.getRepository(Wiki);
-    const wikis = await wikiRepository.find({
-      where: { deletedAt: IsNull() },
-      order: {
-        createdAt: 'DESC',
+    const wikis = await prisma.wiki.findMany({
+      where: { deletedAt: null },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 
@@ -68,9 +55,7 @@ export async function POST(request: NextRequest) {
     const createData = await request.json();
 
     // 验证子域名是否已存在
-    const dataSource = await initializeDatabase();
-    const wikiRepository = dataSource.getRepository(Wiki);
-    const existingWiki = await wikiRepository.findOne({
+    const existingWiki = await prisma.wiki.findFirst({
       where: { subdomain: createData.subdomain },
     });
 
@@ -83,12 +68,12 @@ export async function POST(request: NextRequest) {
     }
 
     // 创建Wiki
-    const wiki = new Wiki();
-    Object.assign(wiki, createData);
-    if (session) {
-      wiki.creatorId = session.userId;
-    }
-    await wikiRepository.save(wiki);
+    const wiki = await prisma.wiki.create({
+      data: {
+        ...createData,
+        creatorId: session?.userId
+      }
+    });
 
     return NextResponse.json({
       code: 0,
@@ -103,4 +88,4 @@ export async function POST(request: NextRequest) {
       data: null,
     }, { status: 500 });
   }
-} 
+}

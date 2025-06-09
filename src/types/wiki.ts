@@ -2,7 +2,9 @@
 export enum WikiStatus {
   PENDING = 'pending',
   ACTIVE = 'active',
-  SUSPENDED = 'suspended'
+  REJECTED = 'rejected',
+  DRAFT = 'draft',
+  PUBLISHED = 'published'
 }
 
 // Wiki列表项类型

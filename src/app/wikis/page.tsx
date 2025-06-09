@@ -2,19 +2,35 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  MagnifyingGlassIcon, 
-  PencilSquareIcon,
-  TrashIcon,
-  PlusIcon,
-  EyeIcon,
-  CheckCircleIcon,
-  XCircleIcon
-} from '@heroicons/react/24/outline';
+  SearchOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  EyeOutlined,
+  CheckOutlined,
+  CloseOutlined
+} from '@ant-design/icons';
+import { 
+  Table, 
+  Button, 
+  Space, 
+  Input, 
+  Select, 
+  Tag, 
+  Modal,
+  message,
+  Card,
+  Row,
+  Col,
+  notification
+} from 'antd';
 import AdminLayout from '../components/layout/AdminLayout';
 import { request } from '@/utils/request';
-import { Notification } from '@/utils/notification';
 import Link from 'next/link';
 import { WikiListItem, WikiStatus } from '@/types/wiki';
+
+const { Search } = Input;
+const { Option } = Select;
 
 export default function WikisPage() {
   // 状态管理
@@ -22,7 +38,7 @@ export default function WikisPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<WikiStatus | 'all'>('all');
   const [isLoading, setIsLoading] = useState(true);
-
+  const [api, contextHolder] = notification.useNotification();
   // 获取Wiki列表
   useEffect(() => {
     fetchWikis();
@@ -36,7 +52,29 @@ export default function WikisPage() {
       }
     } catch (error) {
       console.error('获取Wiki列表失败:', error);
-      Notification.error('获取Wiki列表失败');
+      // 获取Wiki列表失败
+      api.error({
+        message: '获取Wiki列表失败',
+        placement: 'topRight'
+      });
+      
+      // Wiki删除成功
+      api.success({
+        message: 'Wiki删除成功', 
+        placement: 'topRight'
+      });
+      
+      // 审核Wiki失败
+      api.error({
+        message: '审核Wiki失败',
+        placement: 'topRight' 
+      });
+      
+      // Wiki已拒绝
+      api.success({
+        message: 'Wiki已拒绝',
+        placement: 'topRight'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -55,11 +93,18 @@ export default function WikisPage() {
 
       if (response.code === 0) {
         setWikis(wikis.filter(wiki => wiki.id !== wikiId));
-        Notification.success('Wiki删除成功');
+       
+        api.success({
+          message: 'Wiki删除成功',
+          placement: 'topRight'
+        })
       }
     } catch (error) {
       console.error('删除Wiki失败:', error);
-      Notification.error('删除Wiki失败');
+      api.error({
+        message: '删除Wiki失败',
+        placement: 'topRight'
+      })
     }
   };
 
@@ -72,11 +117,18 @@ export default function WikisPage() {
 
       if (response.code === 0) {
         await fetchWikis(); // 重新加载列表
-        Notification.success('Wiki审核通过');
+        api.success({
+          message: 'Wiki审核通过',
+          placement: 'topRight'
+        })
       }
     } catch (error) {
       console.error('审核Wiki失败:', error);
-      Notification.error('审核Wiki失败');
+    
+      api.error({
+        message: '审核Wiki失败',
+        placement: 'topRight'
+      })
     }
   };
 
@@ -89,11 +141,17 @@ export default function WikisPage() {
 
       if (response.code === 0) {
         await fetchWikis(); // 重新加载列表
-        Notification.success('Wiki已拒绝');
+        api.success({
+          message: 'Wiki已拒绝',
+          placement: 'topRight'
+        })
       }
     } catch (error) {
       console.error('拒绝Wiki失败:', error);
-      Notification.error('拒绝Wiki失败');
+      api.error({
+        message: '拒绝Wiki失败',
+        placement: 'topRight'
+      })
     }
   };
 
@@ -108,168 +166,135 @@ export default function WikisPage() {
     return matchesSearch && matchesStatus;
   });
 
+  const columns = [
+    {
+      title: 'Wiki信息',
+      dataIndex: 'name',
+      key: 'name',
+      render: (text: string, record: WikiListItem) => (
+        <div>
+          <div className="font-medium">{text}</div>
+          <div className="text-gray-500">{record.title}</div>
+          <div className="text-gray-400 truncate">{record.description}</div>
+        </div>
+      ),
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: WikiStatus) => {
+        let color = '';
+        switch(status) {
+          case 'published': color = 'green'; break;
+          case 'pending': color = 'orange'; break;
+          default: color = 'red';
+        }
+        return (
+          <Tag color={color}>
+            {status === 'published' ? '已发布' :
+             status === 'pending' ? '待审核' :
+             status === 'rejected' ? '审核失败' : '审核通过'}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: '统计',
+      key: 'stats',
+      render: (record: WikiListItem) => (
+        <div>
+          <div>页面：{record.pageCount}</div>
+          <div>贡献者：{record.contributorCount}</div>
+          <div>浏览：{record.viewCount}</div>
+        </div>
+      ),
+    },
+    {
+      title: '创建时间',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (date: string) => new Date(date).toLocaleDateString(),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (record: WikiListItem) => (
+        <Space size="middle">
+          {record.status === 'pending' && (
+            <>
+              <Button 
+                icon={<CheckOutlined />}
+                type="primary" 
+                onClick={() => handleApproveWiki(record.id)}
+              >
+                通过
+              </Button>
+              <Button 
+                icon={<CloseOutlined />}
+                danger
+                onClick={() => handleRejectWiki(record.id)}
+              >
+                拒绝
+              </Button>
+            </>
+          )}
+          <Link href={`/wikis/${record.id}`}>
+            <Button icon={<EyeOutlined />}>查看</Button>
+          </Link>
+          <Link href={`/wikis/${record.id}/edit`}>
+            <Button icon={<EditOutlined />}>编辑</Button>
+          </Link>
+          <Button 
+            icon={<DeleteOutlined />}
+            danger
+            onClick={() => handleDeleteWiki(record.id)}
+          >
+            删除
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        {/* 页面标题和添加按钮 */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Wiki管理</h1>
-            <p className="mt-2 text-sm text-gray-700">
-              管理所有的Wiki站点
-            </p>
-          </div>
-          <Link
-            href="/wikis/new"
-            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            <PlusIcon className="mr-2 h-5 w-5" />
-            创建Wiki
-          </Link>
-        </div>
-
-        {/* 搜索和筛选工具栏 */}
-        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-          <div className="relative flex-1 max-w-md">
-            <input
-              type="text"
+      <Card title="Wiki管理">
+        <Row gutter={16} className="mb-4">
+          <Col span={12}>
+            <Search
               placeholder="搜索Wiki..."
+              allowClear
+              enterButton={<SearchOutlined />}
+              size="large"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full rounded-md border-gray-300 pl-10 pr-3 py-2 text-sm placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500"
             />
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-            </div>
-          </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as WikiStatus | 'all')}
-            className="mt-4 sm:mt-0 block w-full sm:w-auto rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-          >
-           <option value="all">所有状态</option>
-  <option value="draft">审核通过</option>
-  <option value="pending">待审核</option>
-  <option value="rejected">审核失败</option>
-  <option value="published">已发布</option>
-          </select>
-        </div>
+          </Col>
+          <Col span={6}>
+            <Select
+              style={{ width: '100%' }}
+              size="large"
+              value={statusFilter}
+              onChange={(value) => setStatusFilter(value)}
+            >
+              <Option value="all">所有状态</Option>
+              <Option value="draft">审核通过</Option>
+              <Option value="pending">待审核</Option>
+              <Option value="rejected">审核失败</Option>
+              <Option value="published">已发布</Option>
+            </Select>
+          </Col>
+        </Row>
 
-        {/* Wiki列表 */}
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Wiki信息
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  状态
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  统计
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  创建时间
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  操作
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
-                    加载中...
-                  </td>
-                </tr>
-              ) : filteredWikis.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
-                    没有找到匹配的Wiki
-                  </td>
-                </tr>
-              ) : (
-                filteredWikis.map((wiki) => (
-                  <tr key={wiki.id}>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <div className="text-sm font-medium text-gray-900">
-                          {wiki.name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {wiki.title}
-                        </div>
-                        <div className="mt-1 text-xs text-gray-500 truncate max-w-md">
-                          {wiki.description}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                        wiki.status === 'published'
-                          ? 'bg-green-100 text-green-800'
-                          : wiki.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                         {wiki.status === 'published' ? '已发布' :
-   wiki.status === 'pending' ? '待审核' :
-   wiki.status === 'rejected' ? '审核失败' : '审核通过'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div>页面：{wiki.pageCount}</div>
-                      <div>贡献者：{wiki.contributorCount}</div>
-                      <div>浏览：{wiki.viewCount}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(wiki.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 gap-2 flex justify-end py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {wiki.status === 'pending' && (
-    <>
-      <button
-        onClick={() => handleApproveWiki(wiki.id)}
-        className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-      >
-        通过
-      </button>
-      <button
-        onClick={() => handleRejectWiki(wiki.id)}
-        className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-      >
-        拒绝
-      </button>
-    </>
-  )}
-                        <Link
-    href={`/wikis/${wiki.id}`}
-    className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-  >
-    查看
-  </Link>
-  <Link
-    href={`/wikis/${wiki.id}/edit`}
-    className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-  >
-    编辑
-  </Link>
-  <button
-    onClick={() => handleDeleteWiki(wiki.id)}
-    className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-  >
-    删除
-  </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        <Table
+          columns={columns}
+          dataSource={filteredWikis}
+          rowKey="id"
+          loading={isLoading}
+          pagination={false}
+        />
+      </Card>
     </AdminLayout>
   );
-} 
+}

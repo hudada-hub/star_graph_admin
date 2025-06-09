@@ -1,18 +1,11 @@
 import { NextResponse } from 'next/server';
-import { initializeDatabase } from '@/data-source';
-import { SystemSetting } from '@/entities/SystemSetting';
-import { getServerSession } from '@/utils/session';
+import prisma from '@/lib/prisma';
 
 // 获取系统设置
 export async function GET() {
   try {
-   
-
-    const dataSource = await initializeDatabase();
-    const settingRepository = dataSource.getRepository(SystemSetting);
-    
     // 获取所有设置
-    const settings = await settingRepository.find();
+    const settings = await prisma.systemSetting.findMany();
     
     // 将设置转换为对象格式
     const settingsObject = settings.reduce((acc, setting) => {
@@ -48,27 +41,16 @@ export async function GET() {
 // 更新系统设置
 export async function PUT(request: Request) {
   try {
-    
-
     const body = await request.json();
-    const dataSource = await initializeDatabase();
-    const settingRepository = dataSource.getRepository(SystemSetting);
-
-    // 将对象格式的设置转换为数组格式
-    const settingsToUpdate = Object.entries(body).map(([key, value]) => ({
-      key,
-      value: String(value),
-    }));
 
     // 批量更新设置
     await Promise.all(
-      settingsToUpdate.map(setting =>
-        settingRepository.upsert(
-          setting,
-          {
-            conflictPaths: ['key'],
-          }
-        )
+      Object.entries(body).map(([key, value]) => 
+        prisma.systemSetting.upsert({
+          where: { key },
+          update: { value: String(value) },
+          create: { key, value: String(value) }
+        })
       )
     );
 
@@ -85,4 +67,4 @@ export async function PUT(request: Request) {
       data: null,
     }, { status: 500 });
   }
-} 
+}

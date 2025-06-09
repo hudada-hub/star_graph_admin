@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
-import { initializeDatabase } from '@/data-source';
-import { User } from '@/entities/User';
+import prisma from '@/lib/prisma';
 import * as argon2 from 'argon2';
 import { getSessionFromToken } from '@/utils/auth';
-
-
 
 export async function POST(request: Request) {
   try {
@@ -21,13 +18,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { oldPassword, newPassword } = body;
 
-    const dataSource = await initializeDatabase();
-    const userRepository = dataSource.getRepository(User);
-
     // 获取用户信息
-    const user = await userRepository.findOne({
+    const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: ['id', 'password'],
+      select: {
+        id: true,
+        password: true
+      }
     });
 
     if (!user) {
@@ -50,8 +47,11 @@ export async function POST(request: Request) {
 
     // 更新密码
     const hashedPassword = await argon2.hash(newPassword);
-    await userRepository.update(user.id, {
-      password: hashedPassword,
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword
+      }
     });
 
     return NextResponse.json({
@@ -67,4 +67,4 @@ export async function POST(request: Request) {
       data: null,
     }, { status: 500 });
   }
-} 
+}

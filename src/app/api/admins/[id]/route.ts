@@ -1,9 +1,8 @@
 import { NextRequest } from 'next/server';
 import { ResponseUtil } from '@/utils/response';
-import AppDataSource from '@/data-source';
-import { User } from '@/entities/User';
 import { UserRole } from '@/types/user';
 import { verifyAuth } from '@/utils/auth';
+import prisma from '@/lib/prisma';
 
 // 获取管理员详情
 export async function GET(
@@ -17,16 +16,23 @@ export async function GET(
       return ResponseUtil.forbidden('无权限访问');
     }
 
-    // 获取用户仓库
-    const userRepository = AppDataSource.getRepository(User);
-
     // 查询管理员信息
-    const admin = await userRepository.findOne({
+    const admin = await prisma.user.findUnique({
       where: { 
         id: parseInt(params.id),
-        role: [UserRole.SUPER_ADMIN, UserRole.REVIEWER]
+        role: { in: [UserRole.SUPER_ADMIN, UserRole.REVIEWER] }
       },
-      select: ['id', 'username', 'email', 'role', 'status', 'createdAt', 'lastLoginAt', 'loginCount', 'lastLoginIp']
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        lastLoginAt: true,
+        loginCount: true,
+        lastLoginIp: true
+      }
     });
 
     if (!admin) {
@@ -61,28 +67,22 @@ export async function PUT(
       return ResponseUtil.error('无效的角色类型');
     }
 
-    // 获取用户仓库
-    const userRepository = AppDataSource.getRepository(User);
-
-    // 查询管理员
-    const admin = await userRepository.findOne({
+    // 更新管理员信息
+    const admin = await prisma.user.update({
       where: { 
         id: parseInt(params.id),
-        role: [UserRole.SUPER_ADMIN, UserRole.REVIEWER]
+        role: { in: [UserRole.SUPER_ADMIN, UserRole.REVIEWER] }
+      },
+      data: {
+        email,
+        role,
+        status
       }
     });
 
     if (!admin) {
       return ResponseUtil.error('管理员不存在');
     }
-
-    // 更新信息
-    if (email !== undefined) admin.email = email;
-    if (role !== undefined) admin.role = role;
-    if (status !== undefined) admin.status = status;
-
-    // 保存到数据库
-    await userRepository.save(admin);
 
     return ResponseUtil.success(null, '管理员信息更新成功');
   } catch (error) {
@@ -103,14 +103,14 @@ export async function DELETE(
       return ResponseUtil.forbidden('只有超级管理员可以删除管理员账号');
     }
 
-    // 获取用户仓库
-    const userRepository = AppDataSource.getRepository(User);
-
-    // 查询管理员
-    const admin = await userRepository.findOne({
+    // 软删除管理员
+    const admin = await prisma.user.update({
       where: { 
         id: parseInt(params.id),
-        role: [UserRole.SUPER_ADMIN, UserRole.REVIEWER]
+        role: { in: [UserRole.SUPER_ADMIN, UserRole.REVIEWER] }
+      },
+      data: {
+        deletedAt: new Date()
       }
     });
 
@@ -118,13 +118,9 @@ export async function DELETE(
       return ResponseUtil.error('管理员不存在');
     }
 
-    // 软删除
-    admin.deletedAt = new Date();
-    await userRepository.save(admin);
-
     return ResponseUtil.success(null, '管理员删除成功');
   } catch (error) {
     console.error('删除管理员失败:', error);
     return ResponseUtil.error('删除管理员失败');
   }
-} 
+}

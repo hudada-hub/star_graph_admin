@@ -12,7 +12,7 @@ interface ArticleCategory {
   id: number;
   name: string;
   description: string;
-  sort: number;
+  sortOrder: number;  // 修改字段名
   isEnabled: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -71,10 +71,14 @@ export default function ArticleCategoriesPage() {
         ? `/article-categories/${editingCategory.id}`
         : '/article-categories';
       const method = editingCategory ? 'PUT' : 'POST';
-      
+      console.log(values,'values')
+
       const response = await request(url, {
         method,
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...values,
+          sortOrder: values.sort // 将sort映射为sortOrder
+        }),
       });
 
       if (response.code === 0) {
@@ -264,7 +268,7 @@ export default function ArticleCategoriesPage() {
               <Input.TextArea placeholder="请输入分类描述" rows={4} />
             </Form.Item>
             <Form.Item
-              name="sort"
+              name="sort"  // 保持前端表单字段名为sort
               label="排序"
               initialValue={0}
             >

@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { initializeDatabase } from '@/data-source';
-import { Article } from '@/entities/Article';
-import { getServerSession } from '@/utils/session';
+import prisma from '@/lib/prisma';
 
 // 获取文章详情
 export async function GET(
@@ -9,14 +7,11 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-   
-
-    const dataSource = await initializeDatabase();
-    const articleRepository = dataSource.getRepository(Article);
-    
-    const article = await articleRepository.findOne({
+    const article = await prisma.article.findUnique({
       where: { id: parseInt(params.id) },
-      relations: ['category'],
+      include: {
+        category: true
+      }
     });
 
     if (!article) {
@@ -28,7 +23,12 @@ export async function GET(
     }
 
     // 增加浏览次数
-    await articleRepository.increment({ id: article.id }, 'viewCount', 1);
+    await prisma.article.update({
+      where: { id: article.id },
+      data: {
+        viewCount: { increment: 1 }
+      }
+    });
 
     return NextResponse.json({
       code: 0,
@@ -51,17 +51,12 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-   
-
     const body = await request.json();
     const { title, categoryId, content, summary, isPublished, tags } = body;
 
-    const dataSource = await initializeDatabase();
-    const articleRepository = dataSource.getRepository(Article);
-
     // 检查文章是否存在
-    const article = await articleRepository.findOne({
-      where: { id: parseInt(params.id) },
+    const article = await prisma.article.findUnique({
+      where: { id: parseInt(params.id) }
     });
 
     if (!article) {
@@ -73,14 +68,17 @@ export async function PUT(
     }
 
     // 更新文章
-    await articleRepository.update(article.id, {
-      title,
-      categoryId,
-      content,
-      summary,
-      isPublished,
-      tags,
-      updatedAt: new Date(),
+    await prisma.article.update({
+      where: { id: article.id },
+      data: {
+        title,
+        categoryId,
+        content,
+        summary,
+        isPublished,
+        tags,
+        updatedAt: new Date()
+      }
     });
 
     return NextResponse.json({
@@ -104,14 +102,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-   
-
-    const dataSource = await initializeDatabase();
-    const articleRepository = dataSource.getRepository(Article);
-
     // 检查文章是否存在
-    const article = await articleRepository.findOne({
-      where: { id: parseInt(params.id) },
+    const article = await prisma.article.findUnique({
+      where: { id: parseInt(params.id) }
     });
 
     if (!article) {
@@ -123,7 +116,9 @@ export async function DELETE(
     }
 
     // 删除文章
-    await articleRepository.delete(article.id);
+    await prisma.article.delete({
+      where: { id: article.id }
+    });
 
     return NextResponse.json({
       code: 0,
@@ -138,4 +133,4 @@ export async function DELETE(
       data: null,
     }, { status: 500 });
   }
-} 
+}

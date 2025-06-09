@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
 import { ResponseUtil } from '@/utils/response';
-import AppDataSource from '@/data-source';
-import { User } from '@/entities/User';
+import prisma from '@/lib/prisma';
+import { UserRole } from '@/types/user';
 import { verifyAuth } from '@/utils/auth';
-import {UserRole} from '@/types/user';
+
 // 删除用户
 export async function DELETE(
   request: NextRequest,
@@ -17,8 +17,9 @@ export async function DELETE(
     }
 
     // 检查是否为管理员
-    const userRepository = AppDataSource.getRepository(User);
-    const currentUser = await userRepository.findOneBy({ id: authResult.user.id });
+    const currentUser = await prisma.user.findUnique({
+      where: { id: authResult.user.id }
+    });
     
     if (!currentUser || (currentUser.role !== UserRole.SUPER_ADMIN && currentUser.role !== UserRole.REVIEWER)) {
       return ResponseUtil.error('没有权限删除用户');
@@ -26,7 +27,9 @@ export async function DELETE(
 
     // 获取要删除的用户
     const userId = parseInt(params.id);
-    const user = await userRepository.findOneBy({ id: userId });
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
 
     if (!user) {
       return ResponseUtil.error('用户不存在');
@@ -38,7 +41,10 @@ export async function DELETE(
     }
 
     // 软删除用户
-    await userRepository.softDelete(userId);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { deletedAt: new Date() }
+    });
 
     return ResponseUtil.success(null, '用户删除成功');
   } catch (error) {
@@ -60,8 +66,9 @@ export async function PUT(
     }
 
     // 检查是否为管理员
-    const userRepository = AppDataSource.getRepository(User);
-    const currentUser = await userRepository.findOneBy({ id: authResult.user.id });
+    const currentUser = await prisma.user.findUnique({
+      where: { id: authResult.user.id }
+    });
     
     if (!currentUser || (currentUser.role !== UserRole.SUPER_ADMIN && currentUser.role !== UserRole.REVIEWER)) {
       return ResponseUtil.error('没有权限修改用户');
@@ -69,7 +76,9 @@ export async function PUT(
 
     // 获取要更新的用户
     const userId = parseInt(params.id);
-    const user = await userRepository.findOneBy({ id: userId });
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
 
     if (!user) {
       return ResponseUtil.error('用户不存在');
@@ -85,14 +94,24 @@ export async function PUT(
     const { email, status } = data;
 
     // 更新用户信息
-    if (email !== undefined) user.email = email;
-    if (status !== undefined) user.status = status;
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        email,
+        status
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        status: true
+      }
+    });
 
-    await userRepository.save(user);
-
-    return ResponseUtil.success(user, '用户信息更新成功');
+    return ResponseUtil.success(updatedUser, '用户信息更新成功');
   } catch (error) {
     console.error('更新用户失败:', error);
     return ResponseUtil.error('服务器错误');
   }
-} 
+}

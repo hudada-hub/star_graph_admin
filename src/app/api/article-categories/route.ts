@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server';
-import AppDataSource, { initializeDatabase } from '@/data-source';
-import { ArticleCategory } from '@/entities/ArticleCategory';
+import prisma from '@/lib/prisma';
 
 // 获取分类列表
 export async function GET() {
   try {
-    await initializeDatabase();
-    const categoryRepository = AppDataSource.getRepository(ArticleCategory);
-    const categories = await categoryRepository.find({
-      order: {
-        createdAt: 'DESC',
+    const categories = await prisma.articleCategory.findMany({
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 
@@ -34,12 +31,11 @@ export async function GET() {
 // 创建新分类
 export async function POST(request: Request) {
   try {
-    await initializeDatabase();
     const body = await request.json();
-    const categoryRepository = AppDataSource.getRepository(ArticleCategory);
     
-    const category = categoryRepository.create(body);
-    await categoryRepository.save(category);
+    const category = await prisma.articleCategory.create({
+      data: body
+    });
 
     return NextResponse.json({
       code: 0,
@@ -51,10 +47,10 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { 
         code: 500,
-        message: '创建分类失败'+error,
+        message: '创建分类失败: ' + (error instanceof Error ? error.message : String(error)),
         data: null
       },
       { status: 500 }
     );
   }
-} 
+}

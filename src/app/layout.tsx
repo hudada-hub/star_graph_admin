@@ -2,12 +2,8 @@
 import './globals.css'
 import '@ant-design/v5-patch-for-react-19';
 import { NotificationProvider } from '@/components/providers/notification-provider'
-import { initializeDatabase } from '@/data-source';
 
-if (process.env.NODE_ENV === 'development') {
-  console.log('初始化数据库development');  
-  initializeDatabase().catch(console.error);
-}
+import '@/init-admin'
 
 export default function RootLayout({
   children,

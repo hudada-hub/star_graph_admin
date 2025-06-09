@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
-import { initializeDatabase } from '@/data-source';
-import { User } from '@/entities/User';
-import { verify } from 'jsonwebtoken';
-import { Not } from 'typeorm';
+import prisma from '@/lib/prisma';
 import { getSessionFromToken } from '@/utils/auth';
-
 
 // 获取个人资料
 export async function GET(request: Request) {
@@ -18,13 +14,16 @@ export async function GET(request: Request) {
         data: null,
       }, { status: 401 });
     }
-
-    const dataSource = await initializeDatabase();
-    const userRepository = dataSource.getRepository(User);
     
-    const user = await userRepository.findOne({
+    const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: ['id', 'username', 'email', 'avatar', 'nickname'],
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        avatar: true,
+        nickname: true
+      }
     });
 
     if (!user) {
@@ -66,15 +65,12 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { nickname, email } = body;
 
-    const dataSource = await initializeDatabase();
-    const userRepository = dataSource.getRepository(User);
-
     // 检查邮箱是否被其他用户使用
-    const existingUser = await userRepository.findOne({
+    const existingUser = await prisma.user.findFirst({
       where: {
         email,
-        id: Not(session.userId)
-      },
+        NOT: { id: session.userId }
+      }
     });
 
     if (existingUser) {
@@ -86,9 +82,12 @@ export async function PUT(request: Request) {
     }
 
     // 更新用户信息
-    await userRepository.update(session.userId, {
-      nickname,
-      email,
+    await prisma.user.update({
+      where: { id: session.userId },
+      data: {
+        nickname,
+        email
+      }
     });
 
     return NextResponse.json({
@@ -104,4 +103,4 @@ export async function PUT(request: Request) {
       data: null,
     }, { status: 500 });
   }
-} 
+}

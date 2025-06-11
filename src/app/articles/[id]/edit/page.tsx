@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, Form, Input, Button, message, Select, Switch, Space } from 'antd';
-import { Editor } from '@tinymce/tinymce-react';
+import { Card, Form, Input, Button, message, TreeSelect, Select, Switch, Space } from 'antd';
 import { request } from '@/utils/request';
 import AdminLayout from '@/app/components/layout/AdminLayout';
+import WangEditor from '@/components/WangEditor';
 
 interface ArticleForm {
   title: string;
   categoryId: number;
   content: string;
   summary: string;
-  isPublished: boolean;
+  status: 'DRAFT' | 'PUBLISHED';
   tags: string[];
 }
 
@@ -51,12 +51,12 @@ export default function ArticleEditPage({ params }: { params: { id: string } }) 
         method: 'GET',
       });
       if (response.code === 0 && response.data) {
-        const { title, categoryId, content, summary, isPublished, tags } = response.data;
+        const { title, categoryId, content, summary, status, tags } = response.data;
         form.setFieldsValue({
           title,
           categoryId,
           summary,
-          isPublished,
+          status,
           tags: tags || [],
         });
         setContent(content);
@@ -75,17 +75,22 @@ export default function ArticleEditPage({ params }: { params: { id: string } }) 
     }
   }, [params.id]);
 
-  // 将分类列表转换为Select选项
-  const transformToSelectOptions = (categories: ArticleCategory[]): any[] => {
+  // 将分类列表转换为TreeSelect选项
+  const transformToTreeData = (categories: ArticleCategory[]): any[] => {
     return categories.map(category => ({
+      title: category.name,
       value: category.id,
-      label: category.name,
-      children: category.children ? transformToSelectOptions(category.children) : undefined,
+      children: category.children ? transformToTreeData(category.children) : undefined,
     }));
   };
 
   // 处理表单提交
   const handleSubmit = async (values: ArticleForm) => {
+    if (!content.trim()) {
+      message.error('请输入文章内容');
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await request(`/articles/${params.id}`, {
@@ -129,9 +134,15 @@ export default function ArticleEditPage({ params }: { params: { id: string } }) 
               label="所属分类"
               rules={[{ required: true, message: '请选择所属分类' }]}
             >
-              <Select
+              <TreeSelect
+                treeData={transformToTreeData(categories)}
                 placeholder="请选择所属分类"
-                options={transformToSelectOptions(categories)}
+                treeDefaultExpandAll
+                className="w-full"
+                showSearch
+                allowClear
+                treeNodeFilterProp="title"
+                disabled={loading}
               />
             </Form.Item>
 
@@ -153,24 +164,16 @@ export default function ArticleEditPage({ params }: { params: { id: string } }) 
               required
               help="文章内容不能为空"
             >
-              <Editor
-                apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
+              <WangEditor
                 value={content}
-                onEditorChange={setContent}
-                init={{
-                  height: 500,
-                  menubar: true,
-                  plugins: [
-                    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                    'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                    'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
-                  ],
-                  toolbar: 'undo redo | blocks | ' +
-                    'bold italic forecolor | alignleft aligncenter ' +
-                    'alignright alignjustify | bullist numlist outdent indent | ' +
-                    'removeformat | help',
-                  content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
-                }}
+                onChange={setContent}
+                placeholder="请输入文章内容..."
+                height={500}
+                maxImageSize={50 * 1024 * 1024}
+                maxVideoSize={50 * 1024 * 1024}
+                maxImageNumber={10}
+                maxVideoNumber={5}
+                disabled={loading}
               />
             </Form.Item>
 
@@ -182,16 +185,22 @@ export default function ArticleEditPage({ params }: { params: { id: string } }) 
                 mode="tags"
                 placeholder="请输入标签"
                 style={{ width: '100%' }}
+                disabled={loading}
               />
             </Form.Item>
 
             <Form.Item
-              name="isPublished"
-              label="是否发布"
+              name="status"
+              label="发布状态"
               valuePropName="checked"
-              initialValue={false}
+              getValueFromEvent={(checked: boolean) => checked ? 'PUBLISHED' : 'DRAFT'}
+              getValueProps={(value: string) => ({ checked: value === 'PUBLISHED' })}
             >
-              <Switch />
+              <Switch
+                disabled={loading}
+                checkedChildren="已发布"
+                unCheckedChildren="草稿"
+              />
             </Form.Item>
 
             <Form.Item>

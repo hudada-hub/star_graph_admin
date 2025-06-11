@@ -22,6 +22,6 @@ UI框架使用antd框架
 
 token不使用cookie，使用localStorage
 
-使用TypeORM开发数据库pgsql
+使用prisma开发数据库pgsql
 
 如果你了解了，请回复“我了解了”

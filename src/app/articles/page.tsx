@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, Button, Space, Tag, message, Modal, Form, Input, Select, Row, Col, Card } from 'antd';
+import { Table, Button, Space, Tag, message, Modal, Form, Input, Select, Row, Col, Card, Switch } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import type { ColumnsType } from 'antd/es/table';
@@ -15,7 +15,7 @@ interface Article {
   content: string;
   authorId: number;
   createdAt: Date;
-  status: 'draft' | 'published';
+  status: 'DRAFT' | 'PUBLISHED';
   updatedAt?: Date;
   viewCount: number;
   summary?: string;
@@ -33,7 +33,7 @@ interface ArticleCategory {
 
 interface SearchParams {
   title?: string;
-  status?: 'draft' | 'published';
+  status?: 'DRAFT' | 'PUBLISHED';
   categoryId?: number;
 }
 
@@ -143,10 +143,29 @@ export default function ArticlesPage() {
       dataIndex: 'status',
       key: 'status',
       width: '8%',
-      render: (status: 'draft' | 'published') => (
-        <Tag color={status === 'published' ? 'green' : 'orange'}>
-          {status === 'published' ? '已发布' : '草稿'}
-        </Tag>
+      render: (status: string, record: any) => (
+        <Switch
+          checked={status === 'PUBLISHED'}
+          checkedChildren="已发布"
+          unCheckedChildren="草稿"
+          onChange={async (checked) => {
+            try {
+              const response = await request(`/articles/${record.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                  status: checked ? 'PUBLISHED' : 'DRAFT'
+                }),
+              });
+              if (response.code === 0) {
+                message.success('状态更新成功');
+                // 刷新列表
+                fetchArticles(searchParams);
+              }
+            } catch (error) {
+              message.error('状态更新失败');
+            }
+          }}
+        />
       ),
     },
     {
@@ -233,8 +252,8 @@ export default function ArticlesPage() {
                     placeholder="请选择状态"
                     allowClear
                   >
-                    <Select.Option value="draft">草稿</Select.Option>
-                    <Select.Option value="published">已发布</Select.Option>
+                    <Select.Option value="DRAFT">草稿</Select.Option>
+                    <Select.Option value="PUBLISHED">已发布</Select.Option>
                   </Select>
                 </Form.Item>
               </Col>

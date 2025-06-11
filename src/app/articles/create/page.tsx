@@ -1,15 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Form, Input, Button, Select, Switch, message } from 'antd';
+import { Form, Input, Button, TreeSelect, Select, message } from 'antd';
 import { useRouter } from 'next/navigation';
-import { Editor } from '@tinymce/tinymce-react';
 import { request } from '@/utils/request';
 import AdminLayout from '../../components/layout/AdminLayout';
+import WangEditor from '@/components/WangEditor';
 
 interface ArticleCategory {
   id: number;
   name: string;
+  children?: ArticleCategory[];
 }
 
 interface ArticleForm {
@@ -18,7 +19,7 @@ interface ArticleForm {
   summary?: string;
   categoryId: number;
   tags?: string[];
-  status: 'draft' | 'published';
+  status: 'DRAFT' | 'PUBLISHED';
 }
 
 export default function CreateArticlePage() {
@@ -31,7 +32,7 @@ export default function CreateArticlePage() {
   // 获取分类列表
   const fetchCategories = async () => {
     try {
-      const response = await request<ArticleCategory[]>('/article-categories', {
+      const response = await request<ArticleCategory[]>('/article-categories/tree', {
         method: 'GET',
       });
       if (response.code === 0) {
@@ -46,13 +47,27 @@ export default function CreateArticlePage() {
     fetchCategories();
   }, []);
 
+  // 将分类列表转换为TreeSelect选项
+  const transformToTreeData = (categories: ArticleCategory[]): any[] => {
+    return categories.map(category => ({
+      title: category.name,
+      value: category.id,
+      children: category.children ? transformToTreeData(category.children) : undefined,
+    }));
+  };
+
   // 处理表单提交
   const handleSubmit = async (values: ArticleForm) => {
     try {
+      if (!content) {
+        message.error('请输入文章内容');
+        return;
+      }
+
       setLoading(true);
       const submitData = {
         ...values,
-        content, // 使用 content 状态中的内容
+        content,
       };
       
       const response = await request('/articles', {
@@ -96,13 +111,15 @@ export default function CreateArticlePage() {
             label="所属分类"
             rules={[{ required: true, message: '请选择文章分类' }]}
           >
-            <Select placeholder="请选择文章分类">
-              {categories.map(category => (
-                <Select.Option key={category.id} value={category.id}>
-                  {category.name}
-                </Select.Option>
-              ))}
-            </Select>
+            <TreeSelect
+              treeData={transformToTreeData(categories)}
+              placeholder="请选择文章分类"
+              treeDefaultExpandAll
+              className="w-full"
+              showSearch
+              allowClear
+              treeNodeFilterProp="title"
+            />
           </Form.Item>
 
           <Form.Item
@@ -131,37 +148,28 @@ export default function CreateArticlePage() {
           <Form.Item
             label="文章内容"
             required
+            className="mb-0"
           >
-            <Editor
-              apiKey="twwkur5lqekntl2f4o6q2hg70xz3kd1i87v7yvfm4f4cvqg2" // 需要替换为您的 TinyMCE API Key
-              init={{
-                height: 500,
-                menubar: true,
-                plugins: [
-                  'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                  'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                  'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
-                ],
-                toolbar: 'undo redo | blocks | ' +
-                  'bold italic forecolor | alignleft aligncenter ' +
-                  'alignright alignjustify | bullist numlist outdent indent | ' +
-                  'removeformat | help',
-                content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
-              }}
-              onEditorChange={(content: string) => {
-                setContent(content);
-              }}
+            <WangEditor
+              value={content}
+              onChange={setContent}
+              placeholder="请输入文章内容..."
+              height={500}
+              maxImageSize={50 * 1024 * 1024}
+              maxVideoSize={50 * 1024 * 1024}
+              maxImageNumber={10}
+              maxVideoNumber={5}
             />
           </Form.Item>
 
           <Form.Item
             name="status"
             label="发布状态"
-            initialValue="draft"
+            initialValue="DRAFT"
           >
             <Select>
-              <Select.Option value="draft">草稿</Select.Option>
-              <Select.Option value="published">发布</Select.Option>
+              <Select.Option value="DRAFT">草稿</Select.Option>
+              <Select.Option value="PUBLISHED">发布</Select.Option>
             </Select>
           </Form.Item>
 

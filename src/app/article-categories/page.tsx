@@ -12,7 +12,7 @@ interface ArticleCategory {
   id: number;
   name: string;
   description: string;
-  sortOrder: number;  // 修改字段名
+  sort: number;  // 修改字段名
   isEnabled: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -77,7 +77,7 @@ export default function ArticleCategoriesPage() {
         method,
         body: JSON.stringify({
           ...values,
-          sortOrder: values.sort // 将sort映射为sortOrder
+          sort: values.sort 
         }),
       });
 
@@ -133,10 +133,17 @@ export default function ArticleCategoriesPage() {
 
   const columns: ColumnsType<ArticleCategory> = [
     {
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 80,
+    },
+    {
       title: '名称',
       dataIndex: 'name',
       key: 'name',
-      width: 200,
+      width: 180,
+      ellipsis: true,
     },
     {
       title: '描述',
@@ -148,13 +155,13 @@ export default function ArticleCategoriesPage() {
       title: '排序',
       dataIndex: 'sort',
       key: 'sort',
-      width: 100,
+      width: 80,
     },
     {
       title: '状态',
       dataIndex: 'isEnabled',
       key: 'isEnabled',
-      width: 100,
+      width: 80,
       render: (isEnabled: boolean, record) => (
         <Switch
           checked={isEnabled}
@@ -166,13 +173,13 @@ export default function ArticleCategoriesPage() {
       title: '创建时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 180,
+      width: 160,
       render: (date: Date) => dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
     },
     {
       title: '操作',
       key: 'action',
-      width: 150,
+      width: 120,
       render: (_, record) => (
         <Space size="middle">
           <Button

@@ -5,4 +5,6 @@
 数据库迁移命令：npx prisma migrate dev --name init
 
 prisma generate
-npx ts-node src/init-admin.ts
+
+
+npx prisma db push

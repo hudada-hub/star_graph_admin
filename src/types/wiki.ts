@@ -1,10 +1,10 @@
 // Wiki状态枚举
 export enum WikiStatus {
-  PENDING = 'pending',
-  ACTIVE = 'active',
-  REJECTED = 'rejected',
-  DRAFT = 'draft',
-  PUBLISHED = 'published'
+  PENDING = 'PENDING',
+  ACTIVE = 'ACTIVE',
+  REJECTED = 'REJECTED',
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED'
 }
 
 // Wiki列表项类型
@@ -14,7 +14,7 @@ export type WikiListItem = {
   subdomain: string;
   title: string;
   description: string;
-  status: 'pending' | 'rejected' | 'draft' | 'published';
+  status: 'PENDING' | 'REJECTED' | 'DRAFT' | 'PUBLISHED';
   pageCount: number;
   contributorCount: number;
   viewCount: number;

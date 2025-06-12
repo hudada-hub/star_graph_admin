@@ -4,7 +4,6 @@
 
 数据库迁移命令：npx prisma migrate dev --name init
 
-prisma generate
+prisma generate&&npx prisma db push
 
 
-npx prisma db push

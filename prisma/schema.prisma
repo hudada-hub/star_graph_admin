@@ -6,25 +6,24 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 enum ArticleStatus {
   DRAFT
   PUBLISHED
 }
 
 model Article {
-  id          Int           @id @default(autoincrement())
-  title       String        @db.VarChar(200)
-  content     String        @db.Text
-  summary     String        @db.Text
-  viewCount   Int          @default(0)
-  isPublished Boolean      @default(false)
-  status      ArticleStatus @default(DRAFT)
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(200)
+  content     String   @db.Text
+  summary     String   @db.Text
+  viewCount   Int      @default(0)
+  isPublished Boolean  @default(false)
   tags        String[] 
+  status      ArticleStatus @default(DRAFT)
   categoryId  Int
   category    ArticleCategory @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   Comment Comment[]
 }
@@ -69,6 +68,8 @@ model User {
   ComponentData ComponentData[]
 
   DetailPage DetailPage[]
+
+  commentLikes CommentLike[]
 }
 
 enum UserRole {
@@ -114,7 +115,7 @@ model Wiki {
   contactInfo      String?  @db.VarChar(100)
   applyReason      String?  @db.Text
   license          String   @default("CC-BY-SA") @db.VarChar(50)
-
+  rejectReason String?  @db.Text
   ComponentData ComponentData[]
 }
 
@@ -130,14 +131,32 @@ model Comment {
   content     String   @db.Text
   createdAt   DateTime @default(now())
   isActive    Boolean  @default(true)
-  likes       Int      @default(0)
+  likeCount   Int      @default(0)
   isDeleted   Boolean  @default(false)
-  detailPage  DetailPage @relation(fields: [detailPageId], references: [id])
-  detailPageId Int
+  detailPage  DetailPage? @relation(fields: [detailPageId], references: [id], onDelete: SetNull)
+  detailPageId Int? // 设为可选字段
   user        User     @relation(fields: [userId], references: [id])
   userId      Int
   article     Article? @relation(fields: [articleId], references: [id])
   articleId   Int?
+  // 评论回复功能（新增）
+  parentComment  Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  parentCommentId Int?     // 父评论ID（顶级评论为null）
+  replies        Comment[] @relation("CommentReplies") // 子评论列表
+  // 点赞关系
+  likes         CommentLike[]
+}
+
+// 评论点赞关系表
+model CommentLike {
+  id        Int      @id @default(autoincrement())
+  comment   Comment  @relation(fields: [commentId], references: [id])
+  commentId Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, commentId])
 }
 
 model ComponentData {

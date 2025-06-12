@@ -8,7 +8,8 @@ import {
   PlusOutlined,
   EyeOutlined,
   CheckOutlined,
-  CloseOutlined
+  CloseOutlined,
+  FileImageOutlined
 } from '@ant-design/icons';
 import { 
   Table, 
@@ -22,12 +23,15 @@ import {
   Card,
   Row,
   Col,
-  notification
+  notification,
+  Image,
+  Tooltip
 } from 'antd';
 import AdminLayout from '../components/layout/AdminLayout';
 import { request } from '@/utils/request';
 import Link from 'next/link';
 import { WikiListItem, WikiStatus } from '@/types/wiki';
+import Swal from 'sweetalert2';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -134,24 +138,51 @@ export default function WikisPage() {
 
   // 处理拒绝Wiki
   const handleRejectWiki = async (wikiId: number) => {
-    try {
-      const response = await request(`/wikis/${wikiId}/reject`, {
-        method: 'POST',
-      });
-
-      if (response.code === 0) {
-        await fetchWikis(); // 重新加载列表
-        api.success({
-          message: 'Wiki已拒绝',
-          placement: 'topRight'
-        })
+    const result = await Swal.fire({
+      title: '拒绝Wiki',
+      input: 'textarea',
+      inputLabel: '拒绝原因',
+      inputPlaceholder: '请输入拒绝原因...',
+      inputAttributes: {
+        'aria-label': '请输入拒绝原因'
+      },
+      showCancelButton: true,
+      confirmButtonText: '确认拒绝',
+      cancelButtonText: '取消',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6e7881',
+      inputValidator: (value) => {
+        if (!value) {
+          return '请输入拒绝原因';
+        }
+        return null;
       }
-    } catch (error) {
-      console.error('拒绝Wiki失败:', error);
-      api.error({
-        message: '拒绝Wiki失败',
-        placement: 'topRight'
-      })
+    });
+
+    if (result.isConfirmed && result.value) {
+      try {
+        const response = await request(`/wikis/${wikiId}/reject`, {
+          method: 'POST',
+          body: JSON.stringify({
+            reason: result.value
+          })
+        });
+
+        if (response.code === 0) {
+          await fetchWikis(); // 重新加载列表
+          api.success({
+            message: 'Wiki已拒绝',
+            description: `拒绝原因：${result.value}`,
+            placement: 'topRight'
+          });
+        }
+      } catch (error) {
+        console.error('拒绝Wiki失败:', error);
+        api.error({
+          message: '拒绝Wiki失败',
+          placement: 'topRight'
+        });
+      }
     }
   };
 
@@ -172,12 +203,41 @@ export default function WikisPage() {
       dataIndex: 'name',
       key: 'name',
       render: (text: string, record: WikiListItem) => (
-        <div>
+        <div className='flex flex-col max-w-[150px]'>
           <div className="font-medium">{text}</div>
           <div className="text-gray-500">{record.title}</div>
-          <div className="text-gray-400 truncate">{record.description}</div>
+          <div className="text-gray-400 truncate" title={record.description}>{record.description}</div>
         </div>
       ),
+    },
+    {
+      title: '图标',
+      dataIndex: 'logo',
+      key: 'logo',
+      width: '80px',
+      render: (logo: string) => {
+        if (!logo) {
+          return (
+            <Tooltip title="暂无图标">
+              <FileImageOutlined className="text-gray-400 text-lg" />
+            </Tooltip>
+          );
+        }
+        return (
+          <Image
+            src={logo}
+            alt="Wiki图标"
+            width={32}
+            height={32}
+            className="rounded object-cover"
+            fallback="/images/default-wiki-icon.png"
+            preview={{
+              mask: <EyeOutlined />,
+              maskClassName: "rounded"
+            }}
+          />
+        );
+      },
     },
     {
       title: '状态',
@@ -186,15 +246,15 @@ export default function WikisPage() {
       render: (status: WikiStatus) => {
         let color = '';
         switch(status) {
-          case 'published': color = 'green'; break;
-          case 'pending': color = 'orange'; break;
+          case 'PUBLISHED': color = 'green'; break;
+          case 'PENDING': color = 'orange'; break;
           default: color = 'red';
         }
         return (
           <Tag color={color}>
-            {status === 'published' ? '已发布' :
-             status === 'pending' ? '待审核' :
-             status === 'rejected' ? '审核失败' : '审核通过'}
+            {status === 'PUBLISHED' ? '已发布' :
+             status === 'PENDING' ? '待审核' :
+             status === 'REJECTED' ? '审核失败' : '审核通过'}
           </Tag>
         );
       },
@@ -221,7 +281,7 @@ export default function WikisPage() {
       key: 'action',
       render: (record: WikiListItem) => (
         <Space size="middle">
-          {record.status === 'pending' && (
+          {record.status === 'PENDING' && (
             <>
               <Button 
                 icon={<CheckOutlined />}
@@ -279,10 +339,10 @@ export default function WikisPage() {
               onChange={(value) => setStatusFilter(value)}
             >
               <Option value="all">所有状态</Option>
-              <Option value="draft">审核通过</Option>
-              <Option value="pending">待审核</Option>
-              <Option value="rejected">审核失败</Option>
-              <Option value="published">已发布</Option>
+              <Option value="DRAFT">审核通过</Option>
+              <Option value="PENDING">待审核</Option>
+              <Option value="REJECTED">审核失败</Option>
+              <Option value="PUBLISHED">已发布</Option>
             </Select>
           </Col>
         </Row>

@@ -10,7 +10,8 @@ import {
   ArrowLeftOnRectangleIcon,
   UserGroupIcon,
   DocumentTextIcon,
-  FolderIcon
+  FolderIcon,
+  ChatBubbleLeftIcon
 } from '@heroicons/react/24/outline';
 
 // 定义菜单项类型
@@ -27,6 +28,7 @@ const menuItems: MenuItem[] = [
   { name: '管理员管理', href: '/admins', icon: UserGroupIcon },
   { name: 'Wiki管理', href: '/wikis', icon: BookOpenIcon },
   { name: '文章管理', href: '/articles', icon: DocumentTextIcon },
+  { name: '评论管理', href: '/comments', icon: ChatBubbleLeftIcon },
   { name: '文章分类', href: '/article-categories', icon: FolderIcon },
   { name: '系统设置', href: '/settings', icon: Cog6ToothIcon },
 ];

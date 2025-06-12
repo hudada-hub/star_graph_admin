@@ -11,6 +11,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const body = await request.json();
     // 验证管理员权限
     const user = await verifyAuth(request);
     if (!user || user.user?.role !== UserRole.SUPER_ADMIN) {
@@ -21,6 +22,7 @@ export async function POST(
     const wiki = await prisma.wiki.update({
       where: { id: parseInt(params.id) },
       data: {
+        rejectReason: body.rejectReason,
         status: WikiStatus.REJECTED
       }
     });

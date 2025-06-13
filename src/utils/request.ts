@@ -66,7 +66,7 @@ export async function request<T = any>(
   if (data.code === ResponseCode.UNAUTHORIZED) {
     removeToken();
     if (typeof window !== 'undefined') {
-      window.location.href = '/admin/login';
+      window.location.href = '/login';
     }
     return data;
   }

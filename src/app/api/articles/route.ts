@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getUserFromToken } from '@/utils/server-auth';
 
 // 获取文章列表
 export async function GET(request: Request) {
@@ -52,11 +53,47 @@ export async function GET(request: Request) {
 // 创建新文章
 export async function POST(request: Request) {
   try {
+    // 验证用户身份
+    const user = await getUserFromToken(request);
+    if (!user) {
+      return NextResponse.json({
+        code: 401,
+        message: '未登录或登录已过期',
+        data: null
+      }, { status: 401 });
+    }
+
     const body = await request.json();
     
-    console.log(body,'body123');
+    // 验证必要字段
+    if (!body.title || !body.content || !body.categoryId) {
+      return NextResponse.json({
+        code: 400,
+        message: '缺少必要字段（标题、内容或分类ID）',
+        data: null
+      }, { status: 400 });
+    }
+
+    // 确保 categoryId 是数字类型
+    const articleData = {
+      ...body,
+      categoryId: typeof body.categoryId === 'string' ? parseInt(body.categoryId) : body.categoryId,
+      authorId: user.id // 使用 token 中的用户 ID
+    };
+
     const article = await prisma.article.create({
-      data: body
+      data: articleData,
+      include: {
+        category: true,
+        author: {
+          select: {
+            id: true,
+            username: true,
+            nickname: true,
+            avatar: true
+          }
+        }
+      }
     });
 
     return NextResponse.json({

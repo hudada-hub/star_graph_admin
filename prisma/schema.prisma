@@ -12,20 +12,27 @@ enum ArticleStatus {
 }
 
 model Article {
-  id          Int      @id @default(autoincrement())
-  title       String   @db.VarChar(200)
-  content     String   @db.Text
-  summary     String   @db.Text
-  viewCount   Int      @default(0)
-  isPublished Boolean  @default(false)
-  tags        String[] 
-  status      ArticleStatus @default(DRAFT)
-  categoryId  Int
-  category    ArticleCategory @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int            @id @default(autoincrement())
+  title        String         @db.VarChar(200)
+  summary      String?        @db.Text
+  content      String         @db.Text
+  coverUrl     String?        @db.VarChar(500) // 封面图URL
+  viewCount    Int            @default(0)
+  likeCount    Int           @default(0)
+  commentCount Int           @default(0)
+  status       ArticleStatus @default(DRAFT)
+  category     ArticleCategory @relation(fields: [categoryId], references: [id])
+  categoryId   Int
+  author       User          @relation(fields: [authorId], references: [id])
+  authorId     Int
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  comments     Comment[]
 
-  Comment Comment[]
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model ArticleCategory {
@@ -48,7 +55,7 @@ model User {
   password       String    @db.VarChar(100)
   email          String    @unique @db.VarChar(100)
   nickname       String?   @db.VarChar(50)
-  avatar         String?
+  avatar         String?   @db.VarChar(500)
   avatarOriginal String?
   role           UserRole  @default(USER)
   status         UserStatus @default(ACTIVE)
@@ -60,16 +67,19 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
-  wikis         Wiki[]
+  wikis          Wiki[]
   approvedWikis  Wiki[]    @relation("ApprovedWikis")
+  comments       Comment[]
+  articles       Article[]
 
-  Comment Comment[]
+  commentLikes   CommentLike[]
+  wikiTemplates  WikiTemplate[]    
+  wikiComponents WikiComponent[]
+  userApplyEditWiki UserApplyEditWiki[] // 用户发起的编辑申请
+  componentHistories WikiComponentHistory[] // 组件编辑历史
 
-  ComponentData ComponentData[]
-
-  DetailPage DetailPage[]
-
-  commentLikes CommentLike[]
+  @@index([email])
+  @@index([username])
 }
 
 enum UserRole {
@@ -115,8 +125,13 @@ model Wiki {
   contactInfo      String?  @db.VarChar(100)
   applyReason      String?  @db.Text
   license          String   @default("CC-BY-SA") @db.VarChar(50)
-  rejectReason String?  @db.Text
-  ComponentData ComponentData[]
+  rejectReason     String?  @db.Text
+ 
+  wikiTemplates    WikiTemplate[]
+  wikiComponents   WikiComponent[] 
+  WikiApplyQuestions WikiApplyQuestions[]
+  userApplyEditWiki UserApplyEditWiki[] // Wiki的编辑权限申请
+  componentHistories WikiComponentHistory[] // 组件编辑历史
 }
 
 enum WikiStatus {
@@ -133,11 +148,11 @@ model Comment {
   isActive    Boolean  @default(true)
   likeCount   Int      @default(0)
   isDeleted   Boolean  @default(false)
-  detailPage  DetailPage? @relation(fields: [detailPageId], references: [id], onDelete: SetNull)
-  detailPageId Int? // 设为可选字段
   user        User     @relation(fields: [userId], references: [id])
   userId      Int
   article     Article? @relation(fields: [articleId], references: [id])
+  templateId    Int?
+  template      WikiTemplate?    @relation(fields: [templateId], references: [id])
   articleId   Int?
   // 评论回复功能（新增）
   parentComment  Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id])
@@ -145,6 +160,18 @@ model Comment {
   replies        Comment[] @relation("CommentReplies") // 子评论列表
   // 点赞关系
   likes         CommentLike[]
+}
+
+// wiki申请问答测试表模型
+model WikiApplyQuestions {
+  id                Int      @id @default(autoincrement())
+  question          String   @db.Text // 问题内容
+  options           String[]  // 问题选项数组
+  correctAnswerIndex Int     // 正确答案索引（从0开始）
+  createdAt         DateTime @default(now()) // 创建日期
+  wiki              Wiki     @relation(fields: [wikiId], references: [id]) // 关联的wiki
+  wikiId            Int     // wiki ID
+  @@index([wikiId]) // 为wikiId添加索引优化查询
 }
 
 // 评论点赞关系表
@@ -159,65 +186,221 @@ model CommentLike {
   @@unique([userId, commentId])
 }
 
-model ComponentData {
-  id             Int      @id @default(autoincrement())
-  data           Json
-  editedAt       DateTime @default(now())
-  component      ComponentType @relation(fields: [componentId], references: [id])
-  componentId    Int
-  wiki           Wiki?    @relation(fields: [wikiId], references: [id])
-  wikiId         Int?
-  editor         User     @relation(fields: [editorId], references: [id])
-  editorId       Int
-  detailPage     DetailPage? @relation(fields: [detailPageId], references: [id])
-  detailPageId   Int?
 
+
+enum WikiType {
+  INDEX     // Wiki首页模板
+  MODULE    // Wiki模块模板
+  DETAIL    // Wiki详情页模板
 }
 
-model ComponentType {
-  id          Int      @id @default(autoincrement())
-  name        String   @db.VarChar(50)
-  description String?  @db.Text
-  config      Json
-  type        Int      // 1: 主页组件, 2: 详情页组件
-  templateId  Int?
-
-  ComponentData ComponentData[]
-}
-
-model DetailPage {
-  id          Int      @id @default(autoincrement())
-  views       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isActive    Boolean  @default(true)
-  description String?  @db.Text
-  creator     User     @relation(fields: [creatorId], references: [id])
-  creatorId   Int
-  template    DetailPageTemplate @relation(fields: [templateId], references: [id])
-  templateId  Int
-  componentDataId Int
-
-
-  ComponentData ComponentData[]
+// Wiki模板模型
+model WikiTemplate {
+  id                Int       @id @default(autoincrement())
+  moduleName        String?   @db.VarChar(100) // 模块名称
+  detailName        String?   @db.VarChar(100) // 详情名称
+  description       String?   @db.Text // 模板描述可选
+  wiki              Wiki      @relation(fields: [wikiId], references: [id])
+  wikiId            Int      
+  type              WikiType  @default(INDEX)
+  lastSaved         DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  editor            User      @relation(fields: [editorId], references: [id])
+  editorId          Int
+  isEnabled         Boolean   @default(true)
+  WikiComponent     WikiComponent[]
 
   Comment Comment[]
 }
 
-model DetailPageTemplate {
-  id          Int      @id @default(autoincrement())
-  name        String   @db.VarChar(50)
-  description String?  @db.Text
-  config      Json
 
-  DetailPage DetailPage[]
+// 新增组件表
+model WikiComponent {
+  id          Int           @id @default(autoincrement())
+  type        String // 组件类型
+  wikiTemplate        WikiTemplate @relation(fields: [wikiTemplateId], references: [id])
+  wikiTemplateId      Int
+  name        String        @db.VarChar(100) // 组件名称
+  props       Json          // 组件属性配置
+  order       Int          // 排序
+  isEnabled   Boolean      @default(true) // 是否启用
+  wiki        Wiki         @relation(fields: [wikiId], references: [id])
+  wikiId      Int
+  editor      User         @relation(fields: [editorId], references: [id])
+  editorId    Int
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  status      WikiComponentStatus @default(CREATE)
+  histories   WikiComponentHistory[] // 组件的编辑历史记录
+
+  @@index([wikiId, order]) // 添加索引以优化查询性能
 }
 
+enum WikiComponentStatus {
+  CREATE
+  DRAFT
+  
+}
 
-model SystemSetting {
+// Wiki编辑权限申请表
+model UserApplyEditWiki {
   id        Int      @id @default(autoincrement())
-  key       String   @unique
-  value     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  wiki      Wiki     @relation(fields: [wikiId], references: [id])
+  wikiId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  status    WikiEditorApplicationStatus @default(APPROVED)
+  applyTime DateTime @default(now())
+  contactInfo String? @db.VarChar(200) // 联系方式
+  @@index([wikiId])
+  @@index([userId])
 }
+
+enum WikiEditorApplicationStatus {
+
+  APPROVED  // 已通过
+  REJECTED  // 已拒绝
+}
+
+// 组件编辑类型枚举
+enum WikiComponentEditType {
+  CREATE    // 新增
+  UPDATE    // 修改
+  DELETE    // 删除
+  
+}
+
+enum WikiComponentHistoryStatus {
+  PENDING
+  REJECTED
+  ACCEPTED
+  
+}
+
+// Wiki组件历史记录表
+model WikiComponentHistory {
+  id          Int                  @id @default(autoincrement())
+  component   WikiComponent        @relation(fields: [componentId], references: [id])
+  componentId Int
+  wiki        Wiki                 @relation(fields: [wikiId], references: [id])
+  wikiId      Int
+  editor      User                 @relation(fields: [editorId], references: [id])
+  editorId    Int
+  editType    WikiComponentEditType
+  status      WikiComponentHistoryStatus @default(PENDING)
+  props       Json                 // 组件属性的历史记录
+  updateTime    DateTime             @default(now())
+  moduleName  String?              @db.VarChar(100) // 模块名称
+  detailName  String?              @db.VarChar(100) // 详情名称
+
+  @@index([componentId])
+  @@index([wikiId])
+  @@index([editorId])
+}
+
+// 配置项类型枚举
+enum ConfigType {
+  TEXT          // 单行文本
+  TEXTAREA      // 多行文本
+  IMAGE         // 单张图片
+  MULTI_IMAGE   // 多张图片
+  MULTI_TEXT    // 多行文本（带链接）
+  MULTI_CONTENT // 多文本图片混合（带链接）
+  RICH_TEXT     // 富文本编辑器
+}
+
+// 配置表
+model Config {
+  id          Int         @id @default(autoincrement())
+  key         String      @unique @db.VarChar(100) // 配置键名
+  title       String      @db.VarChar(100) // 配置名称
+  type        ConfigType  // 配置类型
+  description String?     @db.Text // 配置描述
+  sort        Int         @default(0) // 排序
+  isEnabled   Boolean     @default(true) // 是否启用
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // 根据type类型，关联不同的值表
+  textValue           ConfigTextValue?          // TEXT/TEXTAREA类型的值
+  imageValue         ConfigImageValue?         // IMAGE类型的值
+  multiImageValues    ConfigMultiImageValue[]   // MULTI_IMAGE类型的值
+  multiTextValues     ConfigMultiTextValue[]    // MULTI_TEXT类型的值
+  multiContentValues  ConfigMultiContentValue[] // MULTI_CONTENT类型的值
+
+  @@index([type])
+  @@index([sort])
+  @@index([isEnabled])
+}
+
+// 文本类型配置值表（用于TEXT和TEXTAREA类型）
+model ConfigTextValue {
+  id        Int      @id @default(autoincrement())
+  config    Config   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId  Int      @unique // 一对一关系
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@index([configId])
+}
+
+// 图片类型配置值表（用于IMAGE类型）
+model ConfigImageValue {
+  id        Int      @id @default(autoincrement())
+  config    Config   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId  Int      @unique // 一对一关系
+  url       String   @db.VarChar(500)
+  link      String?  @db.VarChar(500) // 可选的跳转链接
+  alt       String?  @db.VarChar(200) // 图片描述
+  updatedAt DateTime @updatedAt
+
+  @@index([configId])
+}
+
+// 多图片类型配置值表（用于MULTI_IMAGE类型）
+model ConfigMultiImageValue {
+  id        Int      @id @default(autoincrement())
+  config    Config   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId  Int
+  url       String   @db.VarChar(500)
+  link      String?  @db.VarChar(500) // 可选的跳转链接
+  alt       String?  @db.VarChar(200) // 图片描述
+  sort      Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@index([configId, sort])
+}
+
+// 多文本类型配置值表（用于MULTI_TEXT类型）
+model ConfigMultiTextValue {
+  id        Int      @id @default(autoincrement())
+  config    Config   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId  Int
+  title     String   @db.VarChar(200)
+  content   String   @db.Text
+  contentEn String?  @db.Text // 英文内容
+  link      String?  @db.VarChar(500) // 可选的跳转链接
+  sort      Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@index([configId, sort])
+}
+
+// 多文本图片混合类型配置值表（用于MULTI_CONTENT类型）
+model ConfigMultiContentValue {
+  id        Int      @id @default(autoincrement())
+  config    Config   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  configId  Int
+  title     String   @db.VarChar(200)
+  content   String   @db.Text
+  contentEn String?  @db.Text // 英文内容
+  imageUrl  String?  @db.VarChar(500)
+  link      String?  @db.VarChar(500) // 可选的跳转链接
+  alt       String?  @db.VarChar(200) // 图片描述
+  sort      Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@index([configId, sort])
+}
+

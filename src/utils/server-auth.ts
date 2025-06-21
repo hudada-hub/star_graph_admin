@@ -29,10 +29,11 @@ export const getTokenFromRequest = (request: Request): string | null => {
       // 验证 token
       const user = jwt.verify(token, JWT_SECRET) as User;
       
+      console.log(user);
   
 
 
-      if (!user || user.status !== 'active') {
+      if (!user) {
         return null;
       }
 

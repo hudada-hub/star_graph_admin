@@ -30,7 +30,7 @@ const menuItems: MenuItem[] = [
   { name: '文章管理', href: '/articles', icon: DocumentTextIcon },
   { name: '评论管理', href: '/comments', icon: ChatBubbleLeftIcon },
   { name: '文章分类', href: '/article-categories', icon: FolderIcon },
-  { name: '系统设置', href: '/settings', icon: Cog6ToothIcon },
+  { name: '网站配置', href: '/config', icon: Cog6ToothIcon },
 ];
 
 export default function Sidebar() {

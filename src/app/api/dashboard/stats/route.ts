@@ -12,7 +12,7 @@ export async function GET() {
 
     // 获取待审核的文章数量
     const pendingArticles = await prisma.article.count({
-      where: { isPublished: false }
+      where: { status: 'PUBLISHED' }
     });
 
     // 获取今日活跃数据（通过文章浏览量统计）

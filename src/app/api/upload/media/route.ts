@@ -79,7 +79,7 @@ export async function POST(request: Request) {
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${ext}`;
     
     // 确保上传目录存在
-    const uploadDir = join(process.cwd(), 'public', 'uploads', 'media');
+    const uploadDir = 'E:\\code\\nextjs\\star_graph\\public\\uploads\\media';
     await ensureUploadDir(uploadDir);
     
     // 保存文件

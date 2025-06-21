@@ -106,11 +106,11 @@ export default function AdminDetailPage() {
                 <dt className="text-sm font-medium text-gray-500">角色</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                   <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                    admin.role === 'super_admin' 
+                    admin.role === 'SUPER_ADMIN' 
                       ? 'bg-purple-100 text-purple-800'
                       : 'bg-blue-100 text-blue-800'
                   }`}>
-                    {admin.role === 'super_admin' ? '超级管理员' : '审核员'}
+                    {admin.role === 'SUPER_ADMIN' ? '超级管理员' : '审核员'}
                   </span>
                 </dd>
               </div>

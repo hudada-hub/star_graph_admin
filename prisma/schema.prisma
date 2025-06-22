@@ -77,6 +77,7 @@ model User {
   wikiComponents WikiComponent[]
   userApplyEditWiki UserApplyEditWiki[] // 用户发起的编辑申请
   componentHistories WikiComponentHistory[] // 组件编辑历史
+  templateLikes  WikiTemplateLike[] // 添加模板点赞关系
 
   @@index([email])
   @@index([username])
@@ -97,6 +98,7 @@ enum UserStatus {
 model Wiki {
   id               Int      @id @default(autoincrement())
   isMyCustomWiki   Boolean  @default(false)
+  slogan           String?  @db.Text
   hot              Int      @default(0)
   name             String   @unique @db.VarChar(100)
   subdomain        String   @unique @db.VarChar(100)
@@ -106,8 +108,10 @@ model Wiki {
   metaDescription  String?  @db.Text
   backgroundImage  String?  @db.VarChar(200)
   logo             String?  @db.VarChar(200)
-  primaryColor     String   @default("#000000") @db.VarChar(7)
-  settings         Json?
+  primaryColor     String   @default("#64B5F6") @db.VarChar(7)
+  allowComments    Boolean  @default(false)
+  enableSearch     Boolean  @default(false)
+  isShow           Boolean  @default(false)
   status           WikiStatus @default(PENDING)
   pageCount        Int      @default(0)
   contributorCount Int      @default(0)
@@ -132,6 +136,7 @@ model Wiki {
   WikiApplyQuestions WikiApplyQuestions[]
   userApplyEditWiki UserApplyEditWiki[] // Wiki的编辑权限申请
   componentHistories WikiComponentHistory[] // 组件编辑历史
+  menuBgImage String? @db.VarChar(200) // 菜单背景图片
 }
 
 enum WikiStatus {
@@ -205,13 +210,17 @@ model WikiTemplate {
   type              WikiType  @default(INDEX)
   lastSaved         DateTime  @default(now())
   createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
   editor            User      @relation(fields: [editorId], references: [id])
   editorId          Int
   isEnabled         Boolean   @default(true)
   WikiComponent     WikiComponent[]
+  viewCount         Int       @default(0)
+  likeCount         Int       @default(0)
+  Comment           Comment[]
+  likes            WikiTemplateLike[]
 
-  Comment Comment[]
+  @@index([wikiId])
+  @@index([type])
 }
 
 
@@ -402,5 +411,17 @@ model ConfigMultiContentValue {
   updatedAt DateTime @updatedAt
 
   @@index([configId, sort])
+}
+
+// Wiki模板点赞表
+model WikiTemplateLike {
+  id         Int          @id @default(autoincrement())
+  templateId Int
+  userId     Int
+  createdAt  DateTime    @default(now())
+  template   WikiTemplate @relation(fields: [templateId], references: [id])
+  user       User        @relation(fields: [userId], references: [id])
+
+  @@unique([userId, templateId])
 }
 

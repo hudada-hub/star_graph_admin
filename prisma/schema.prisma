@@ -97,6 +97,7 @@ enum UserStatus {
 model Wiki {
   id               Int      @id @default(autoincrement())
   isMyCustomWiki   Boolean  @default(false)
+  slogan           String?  @db.Text
   hot              Int      @default(0)
   name             String   @unique @db.VarChar(100)
   subdomain        String   @unique @db.VarChar(100)
@@ -107,7 +108,10 @@ model Wiki {
   backgroundImage  String?  @db.VarChar(200)
   logo             String?  @db.VarChar(200)
   primaryColor     String   @default("#000000") @db.VarChar(7)
-  settings         Json?
+  isPublic         Boolean  @default(false)
+  allowComments    Boolean  @default(false)
+  enableSearch     Boolean  @default(false)
+  isShow           Boolean  @default(false)
   status           WikiStatus @default(PENDING)
   pageCount        Int      @default(0)
   contributorCount Int      @default(0)
@@ -205,12 +209,11 @@ model WikiTemplate {
   type              WikiType  @default(INDEX)
   lastSaved         DateTime  @default(now())
   createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
   editor            User      @relation(fields: [editorId], references: [id])
   editorId          Int
   isEnabled         Boolean   @default(true)
   WikiComponent     WikiComponent[]
-
+  viewCount         Int       @default(0)
   Comment Comment[]
 }
 

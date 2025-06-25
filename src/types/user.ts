@@ -6,9 +6,9 @@ export enum UserRole {
 }
 // 用户状态枚举
 export enum UserStatus {
-  ACTIVE = 'active',
-  SUSPENDED = 'suspended',
-  INACTIVE = 'inactive'
+  ACTIVE = 'ACTIVE',
+  BANNED = 'BANNED',
+  INACTIVE = 'INACTIVE'
 }
 
 // 用户列表项类型

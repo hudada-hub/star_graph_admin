@@ -49,11 +49,10 @@ export default function WikiEditPage() {
       form.setFieldsValue({
         ...wiki,
         tags: wiki.tags.join(', '),
-        allowComments: wiki.settings?.allowComments ? 'true' : 'false',
-        isPublic: wiki.settings?.isPublic ? 'true' : 'false',
-        enableSearch: wiki.settings?.enableSearch ? 'true' : 'false',
-        customCss: wiki.settings?.customCss,
-        customJs: wiki.settings?.customJs,
+        allowComments: wiki?.allowComments ? 'true' : 'false',
+        isPublic: wiki?.isPublic ? 'true' : 'false',
+        enableSearch: wiki?.enableSearch ? 'true' : 'false',
+        
       });
     }
   }, [wiki, form]);
@@ -72,56 +71,30 @@ export default function WikiEditPage() {
     }
   };
 
-  // 处理图片上传
-  const handleUpload = async (file: File, type: 'logo' | 'background') => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      type === 'logo' ? setLogoLoading(true) : setBackgroundLoading(true);
-      
-      const response = await request('/upload/image', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          // 不设置 Content-Type，让浏览器自动设置
-        },
-      });
-
-      if (response.code === 0 && response.data) {
-        const imageUrl = response.data.url;
-        if (type === 'logo') {
-          setLogoUrl(imageUrl);
-          form.setFieldValue('logo', imageUrl);
-        } else {
-          setBackgroundUrl(imageUrl);
-          form.setFieldValue('backgroundImage', imageUrl);
-        }
-        message.success('上传成功');
-      }
-    } catch (error) {
-      console.error('上传失败:', error);
-      message.error('上传失败');
-    } finally {
-      type === 'logo' ? setLogoLoading(false) : setBackgroundLoading(false);
-    }
-  };
-
   const uploadProps: UploadProps = {
+    name: 'file',
+    accept: 'image/jpeg,image/png,image/gif,image/webp',
+    maxCount: 1,
+    showUploadList: false,
+    headers: {
+      authorization: `Bearer ${localStorage.getItem('token')}`,
+    },
     beforeUpload: (file) => {
+      // 验证文件类型
       const isImage = file.type.startsWith('image/');
       if (!isImage) {
         message.error('只能上传图片文件！');
         return false;
       }
-      const isLt2M = file.size / 1024 / 1024 < 2;
-      if (!isLt2M) {
-        message.error('图片必须小于2MB！');
+      
+      // 验证文件大小（10MB限制，与媒体上传接口一致）
+      const isLt10M = file.size / 1024 / 1024 < 10;
+      if (!isLt10M) {
+        message.error('图片必须小于10MB！');
         return false;
       }
       return true;
     },
-    showUploadList: false,
   };
 
   const handleSubmit = async (values: any) => {
@@ -132,13 +105,9 @@ export default function WikiEditPage() {
         logo: logoUrl,
         backgroundImage: backgroundUrl,
         tags: values.tags.split(',').map((tag: string) => tag.trim()).filter(Boolean),
-        settings: {
-          allowComments: values.allowComments === 'true',
-          isPublic: values.isPublic === 'true',
-          enableSearch: values.enableSearch === 'true',
-          customCss: values.customCss,
-          customJs: values.customJs,
-        },
+        allowComments: values.allowComments === 'true',
+        isPublic: values.isPublic === 'true',
+        enableSearch: values.enableSearch === 'true',
       };
 
       const response = await request(`/wikis/${wiki?.id}`, {
@@ -256,7 +225,26 @@ export default function WikiEditPage() {
                   )}
                   <Upload
                     {...uploadProps}
-                    customRequest={({ file }) => handleUpload(file as File, 'logo')}
+                    action="/api/upload/media"
+                    onChange={(info) => {
+                      if (info.file.status === 'uploading') {
+                        setLogoLoading(true);
+                      }
+                      if (info.file.status === 'done') {
+                        setLogoLoading(false);
+                        if (info.file.response.code === 0) {
+                          const imageUrl = info.file.response.data.url;
+                          setLogoUrl(imageUrl);
+                          form.setFieldValue('logo', imageUrl);
+                          message.success('Logo上传成功');
+                        } else {
+                          message.error(info.file.response.message || 'Logo上传失败');
+                        }
+                      } else if (info.file.status === 'error') {
+                        setLogoLoading(false);
+                        message.error('Logo上传失败');
+                      }
+                    }}
                   >
                     <Button icon={logoLoading ? <LoadingOutlined /> : <UploadOutlined />}>
                       {logoLoading ? '上传中...' : '上传Logo'}
@@ -276,7 +264,26 @@ export default function WikiEditPage() {
                   )}
                   <Upload
                     {...uploadProps}
-                    customRequest={({ file }) => handleUpload(file as File, 'background')}
+                    action="/api/upload/media"
+                    onChange={(info) => {
+                      if (info.file.status === 'uploading') {
+                        setBackgroundLoading(true);
+                      }
+                      if (info.file.status === 'done') {
+                        setBackgroundLoading(false);
+                        if (info.file.response.code === 0) {
+                          const imageUrl = info.file.response.data.url;
+                          setBackgroundUrl(imageUrl);
+                          form.setFieldValue('backgroundImage', imageUrl);
+                          message.success('背景图片上传成功');
+                        } else {
+                          message.error(info.file.response.message || '背景图片上传失败');
+                        }
+                      } else if (info.file.status === 'error') {
+                        setBackgroundLoading(false);
+                        message.error('背景图片上传失败');
+                      }
+                    }}
                   >
                     <Button icon={backgroundLoading ? <LoadingOutlined /> : <UploadOutlined />}>
                       {backgroundLoading ? '上传中...' : '上传背景'}

@@ -36,13 +36,9 @@ export type WikiDetail = {
   backgroundImage?: string;
   logo?: string;
   primaryColor: string;
-  settings?: {
-    allowComments?: boolean;
-    isPublic?: boolean;
-    enableSearch?: boolean;
-    customCss?: string;
-    customJs?: string;
-  };
+  allowComments?: boolean;
+  isPublic?: boolean;
+  enableSearch?: boolean;
   status: 'pending' | 'rejected' | 'draft' | 'published';
   pageCount: number;
   contributorCount: number;
@@ -69,13 +65,9 @@ export type CreateWikiRequest = {
   backgroundImage?: string;
   logo?: string;
   primaryColor?: string;
-  settings?: {
-    allowComments?: boolean;
-    isPublic?: boolean;
-    enableSearch?: boolean;
-    customCss?: string;
-    customJs?: string;
-  };
+  allowComments?: boolean;
+  isPublic?: boolean;
+  enableSearch?: boolean;
   tags?: string[];
   customDomain?: string;
   contactInfo?: string;
@@ -92,13 +84,9 @@ export type UpdateWikiRequest = {
   backgroundImage?: string;
   logo?: string;
   primaryColor?: string;
-  settings?: {
-    allowComments?: boolean;
-    isPublic?: boolean;
-    enableSearch?: boolean;
-    customCss?: string;
-    customJs?: string;
-  };
+  allowComments?: boolean;
+  isPublic?: boolean;
+  enableSearch?: boolean;
   status?: WikiStatus;
   tags?: string[];
   customDomain?: string;

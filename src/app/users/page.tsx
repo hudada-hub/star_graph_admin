@@ -183,9 +183,9 @@ export default function UsersPage() {
                 className="mt-1 block w-full rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="all">全部状态</option>
-                <option value="active">正常</option>
-                <option value="inactive">禁用</option>
-                <option value="pending">待审核</option>
+                <option value="ACTIVE">正常</option>
+                <option value="INACTIVE">禁用</option>
+                <option value="BANNED">封禁</option>
               </select>
             </div>
           </div>
@@ -249,9 +249,9 @@ export default function UsersPage() {
                         onChange={(e) => handleStatusChange(user.id, e.target.value)}
                         className="rounded-md border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500"
                       >
-                        <option value="active">正常</option>
-                        <option value="inactive">禁用</option>
-                        <option value="pending">待审核</option>
+                        <option value="ACTIVE">正常</option>
+                        <option value="INACTIVE">禁用</option>
+                        <option value="BANNED">封禁</option>
                       </select>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -319,9 +319,9 @@ export default function UsersPage() {
                     defaultValue={editingUser.status}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   >
-                    <option value="active">正常</option>
-                    <option value="inactive">禁用</option>
-                    <option value="pending">待审核</option>
+                    <option value="ACTIVE">正常</option>
+                    <option value="INACTIVE">禁用</option>
+                    <option value="BANNED">封禁</option>
                   </select>
                 </div>
               </div>

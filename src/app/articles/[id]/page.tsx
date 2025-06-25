@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Card, Button, message, Descriptions, Tag, Space } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import { request } from '@/utils/request';
@@ -24,11 +24,12 @@ interface Article {
   updatedAt: string;
 }
 
-export default function ArticleDetailPage({ params }: { params: { id: string } }) {
+export default  function ArticleDetailPage() {
+  const params = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [article, setArticle] = useState<Article | null>(null);
-
+  
   // 获取文章详情
   const fetchArticle = async () => {
     try {
@@ -96,7 +97,7 @@ export default function ArticleDetailPage({ params }: { params: { id: string } }
               {dayjs(article.createdAt).format('YYYY-MM-DD HH:mm:ss')}
             </Descriptions.Item>
             <Descriptions.Item label="标签" span={2}>
-              {article.tags.map(tag => (
+              {article.tags?.map(tag => (
                 <Tag key={tag}>{tag}</Tag>
               ))}
             </Descriptions.Item>

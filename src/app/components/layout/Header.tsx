@@ -18,11 +18,7 @@ export default function Header() {
 
         {/* 右侧工具栏 */}
         <div className="flex items-center space-x-4">
-          {/* 通知按钮 */}
-          <button className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500">
-            <span className="sr-only">查看通知</span>
-            <BellIcon className="h-6 w-6" />
-          </button>
+         
 
           {/* 用户菜单 */}
           <div className="relative">
@@ -43,12 +39,7 @@ export default function Header() {
                 >
                   个人资料
                 </Link>
-                <Link
-                  href="/settings"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  设置
-                </Link>
+                
                 <button
                   onClick={() => {
                     // 处理退出登录

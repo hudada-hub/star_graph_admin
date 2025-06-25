@@ -22,11 +22,13 @@ export enum ResponseCode {
   export class ResponseUtil {
     // 成功响应
     static success<T>(data: T, message: string = 'success') {
-      return NextResponse.json({
-        code: 0,
+      const response = {
+        code: ResponseCode.SUCCESS,
         message,
         data,
-      });
+      };
+      console.log('ResponseUtil.success构建的响应:', response);
+      return NextResponse.json(response);
     }
   
     // 错误响应

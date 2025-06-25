@@ -1,16 +1,16 @@
 import { NextRequest } from 'next/server';
 import { ResponseUtil } from '@/utils/response';
 import prisma from '@/lib/prisma';
-import { UserRole } from '@/types/user';
 import { verifyAuth } from '@/utils/auth';
 import * as argon2 from 'argon2';
+import { User,UserRole } from '@prisma/client';
 
 // 获取管理员列表
 export async function GET(request: NextRequest) {
   try {
     // 验证管理员权限
     const authResult = await verifyAuth(request);
-    if (!authResult.user?.role=== UserRole.SUPER_ADMIN) {
+    if (authResult.user?.role !== UserRole.SUPER_ADMIN) {
       return ResponseUtil.forbidden('无权限访问');
     }
 

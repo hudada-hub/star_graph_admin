@@ -270,19 +270,19 @@ export default function WikiDetailPage() {
               <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">评论功能</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {wiki.settings?.allowComments ? '开启' : '关闭'}
+                  {wiki?.allowComments ? '开启' : '关闭'}
                 </dd>
               </div>
               <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">公开访问</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {wiki.settings?.isPublic ? '是' : '否'}
+                  {wiki?.isPublic ? '是' : '否'}
                 </dd>
               </div>
               <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">搜索功能</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {wiki.settings?.enableSearch ? '开启' : '关闭'}
+                  {wiki?.enableSearch ? '开启' : '关闭'}
                 </dd>
               </div>
             </dl>

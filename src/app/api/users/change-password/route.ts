@@ -1,13 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import * as argon2 from 'argon2';
-import { getSessionFromToken } from '@/utils/auth';
+import { verifyAuth } from '@/utils/auth';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     // 验证用户身份
-    const session = await getSessionFromToken(request);
-    if (!session) {
+    const userData = await verifyAuth(request);
+    if (!userData.user) {
       return NextResponse.json({
         code: 401,
         message: '未登录',
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
     // 获取用户信息
     const user = await prisma.user.findUnique({
-      where: { id: session.userId },
+      where: { id: userData.user.id },
       select: {
         id: true,
         password: true

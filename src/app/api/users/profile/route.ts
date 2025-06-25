@@ -1,13 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getSessionFromToken } from '@/utils/auth';
+import { verifyAuth } from '@/utils/auth';
 
 // 获取个人资料
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     // 验证用户身份
-    const session = await getSessionFromToken(request);
-    if (!session) {
+    const userData = await verifyAuth(request);
+    if (!userData.user) {
       return NextResponse.json({
         code: 401,
         message: '未登录',
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     }
     
     const user = await prisma.user.findUnique({
-      where: { id: session.userId },
+      where: { id: userData.user.id },
       select: {
         id: true,
         username: true,
@@ -50,11 +50,11 @@ export async function GET(request: Request) {
 }
 
 // 更新个人资料
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
     // 验证用户身份
-    const session = await getSessionFromToken(request);
-    if (!session) {
+    const userData = await verifyAuth(request);
+    if (!userData.user) {
       return NextResponse.json({
         code: 401,
         message: '未登录',
@@ -69,7 +69,7 @@ export async function PUT(request: Request) {
     const existingUser = await prisma.user.findFirst({
       where: {
         email,
-        NOT: { id: session.userId }
+        NOT: { id: userData.user.id }
       }
     });
 
@@ -83,7 +83,7 @@ export async function PUT(request: Request) {
 
     // 更新用户信息
     await prisma.user.update({
-      where: { id: session.userId },
+      where: { id: userData.user.id },
       data: {
         nickname,
         email

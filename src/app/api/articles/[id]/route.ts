@@ -4,11 +4,12 @@ import prisma from '@/lib/prisma';
 // 获取文章详情
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const article = await prisma.article.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: {
         category: true
       }
@@ -48,15 +49,16 @@ export async function GET(
 // 更新文章
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json();
     const { title, categoryId, content, summary, isPublished, tags } = body;
 
+      const {id} = await params;
     // 检查文章是否存在
     const article = await prisma.article.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     });
 
     if (!article) {
@@ -75,8 +77,6 @@ export async function PUT(
         categoryId,
         content,
         summary,
-        isPublished,
-        tags,
         updatedAt: new Date()
       }
     });
@@ -99,12 +99,13 @@ export async function PUT(
 // 删除文章
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // 检查文章是否存在
     const article = await prisma.article.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     });
 
     if (!article) {

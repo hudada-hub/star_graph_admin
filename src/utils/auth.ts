@@ -5,26 +5,7 @@ import { UserRole } from '@/types/user';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
-export async function getSessionFromToken(request: Request) {
-  try {
-    const token = request.headers.get('authorization')?.split(' ')[1];
-    if (!token) return null;
 
-    const decoded = jwt.verify(token, JWT_SECRET) as {
-      userId: number;
-      username: string;
-      role: string;
-    };
-
-    return {
-      userId: decoded.userId,
-      username: decoded.username,
-      role: decoded.role
-    };
-  } catch (error) {
-    return null;
-  }
-}
 
 export async function verifyAuth(request: NextRequest) {
   try {
@@ -64,10 +45,12 @@ export async function verifyAuth(request: NextRequest) {
   }
 }
 
-export function hasSuperAdminAccess(session: {
-  userId?: number;
-  username?: string;
-  role?: string;
+export function hasSuperAdminAccess(userData: {
+  user?: {
+    id?: number;
+    username?: string;
+    role?: string;
+  } | null;
 } | null): boolean {
-  return session?.role === UserRole.SUPER_ADMIN;
+  return userData?.user?.role === UserRole.SUPER_ADMIN;
 }

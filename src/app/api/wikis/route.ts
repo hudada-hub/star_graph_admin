@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getSessionFromToken, hasSuperAdminAccess } from '@/utils/auth';
+import { verifyAuth, hasSuperAdminAccess } from '@/utils/auth';
 
 // 获取Wiki列表
 export async function GET(request: NextRequest) {
   try {
     // 验证管理员权限
-    const session = await getSessionFromToken(request);
-    if (!hasSuperAdminAccess(session)) {
+    const userData = await verifyAuth(request);
+    if (!hasSuperAdminAccess(userData)) {
       return NextResponse.json({
         code: 403,
         message: '无权访问',
@@ -42,8 +42,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // 验证管理员权限
-    const session = await getSessionFromToken(request);
-    if (!hasSuperAdminAccess(session)) {
+    const userData = await verifyAuth(request);
+    if (!hasSuperAdminAccess(userData)) {
       return NextResponse.json({
         code: 403,
         message: '无权访问',
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     const wiki = await prisma.wiki.create({
       data: {
         ...createData,
-        creatorId: session?.userId
+        creatorId: userData.user?.id
       }
     });
 

@@ -108,7 +108,8 @@ model Wiki {
   metaDescription  String?  @db.Text
   backgroundImage  String?  @db.VarChar(200)
   logo             String?  @db.VarChar(200)
-  primaryColor     String   @default("#64B5F6") @db.VarChar(7)
+  primaryColor     String   @default("#000000") @db.VarChar(7)
+  isPublic         Boolean  @default(false)
   allowComments    Boolean  @default(false)
   enableSearch     Boolean  @default(false)
   isShow           Boolean  @default(false)

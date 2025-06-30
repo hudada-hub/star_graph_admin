@@ -7,8 +7,9 @@ import { verifyAuth } from '@/utils/auth';
 // 删除用户
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
+  const { id } = await params;
   try {
     // 验证管理员权限
     const authResult = await verifyAuth(request);
@@ -26,7 +27,7 @@ export async function DELETE(
     }
 
     // 获取要删除的用户
-    const userId = parseInt(params.id);
+    const userId = id;
     const user = await prisma.user.findUnique({
       where: { id: userId }
     });
@@ -56,8 +57,9 @@ export async function DELETE(
 // 更新用户信息
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
+  const { id } = await params;
   try {
     // 验证管理员权限
     const authResult = await verifyAuth(request);
@@ -75,7 +77,7 @@ export async function PUT(
     }
 
     // 获取要更新的用户
-    const userId = parseInt(params.id);
+    const userId = parseInt(id.toString());
     const user = await prisma.user.findUnique({
       where: { id: userId }
     });

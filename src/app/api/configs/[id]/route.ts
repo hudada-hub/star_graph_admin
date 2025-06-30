@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 import { getUserFromToken } from '@/utils/server-auth';
 
 // 更新配置
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: number }> }) {
   try {
     // 验证用户身份
     const user = await getUserFromToken(request);
@@ -15,7 +15,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       }, { status: 401 });
     }
 
-    const id = parseInt(params.id);
+    const { id } = await params;
     const body = await request.json();
     const { title, type, description, sort, isEnabled, value } = body;
 
@@ -146,7 +146,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 }
 
 // 删除配置
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: number }> }) {
   try {
     // 验证用户身份
     const user = await getUserFromToken(request);
@@ -158,7 +158,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       }, { status: 401 });
     }
 
-    const id = parseInt(params.id);
+    const { id } = await params;
 
     // 删除配置（关联的值会自动删除，因为我们设置了 onDelete: Cascade）
     await prisma.config.delete({
@@ -181,7 +181,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 }
 
 // 更新配置状态
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: number }> }) {
   try {
     // 验证用户身份
     const user = await getUserFromToken(request);
@@ -193,7 +193,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       }, { status: 401 });
     }
 
-    const id = parseInt(params.id);
+    const { id } = await params;
     const body = await request.json();
     const { isEnabled } = body;
 

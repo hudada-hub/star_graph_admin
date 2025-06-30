@@ -7,8 +7,9 @@ import { verifyAuth } from '@/utils/auth';
 // 更新用户状态
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
+  const { id } = await params;
   try {
     // 验证管理员权限
     const authResult = await verifyAuth(request);
@@ -27,7 +28,7 @@ export async function PUT(
 
     // 获取要更新的用户
     const targetUser = await prisma.user.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id.toString()) }
     });
     if (!targetUser) {
       return ResponseUtil.error('用户不存在');

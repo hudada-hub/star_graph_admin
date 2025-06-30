@@ -7,9 +7,10 @@ import prisma from '@/lib/prisma';
 // 获取管理员详情
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // 验证管理员权限
     const authResult = await verifyAuth(request);
     if (!authResult.isAdmin) {
@@ -19,7 +20,7 @@ export async function GET(
     // 查询管理员信息
     const admin = await prisma.user.findUnique({
       where: { 
-        id: parseInt(params.id),
+        id: parseInt(id),
         role: { in: [UserRole.SUPER_ADMIN, UserRole.REVIEWER] }
       },
       select: {
@@ -49,9 +50,10 @@ export async function GET(
 // 更新管理员信息
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // 验证超级管理员权限
     const authResult = await verifyAuth(request);
     if (authResult.role !== UserRole.SUPER_ADMIN) {
@@ -70,7 +72,7 @@ export async function PUT(
     // 更新管理员信息
     const admin = await prisma.user.update({
       where: { 
-        id: parseInt(params.id),
+        id: parseInt(id),
         role: { in: [UserRole.SUPER_ADMIN, UserRole.REVIEWER] }
       },
       data: {
@@ -94,8 +96,9 @@ export async function PUT(
 // 删除管理员
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // 验证超级管理员权限
     const authResult = await verifyAuth(request);
@@ -106,7 +109,7 @@ export async function DELETE(
     // 软删除管理员
     const admin = await prisma.user.update({
       where: { 
-        id: parseInt(params.id),
+        id: parseInt(id),
         role: { in: [UserRole.SUPER_ADMIN, UserRole.REVIEWER] }
       },
       data: {

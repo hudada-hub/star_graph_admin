@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromToken } from '@/utils/server-auth';
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: number }> }) {
   try {
     // 验证用户身份
     const user = await getUserFromToken(request);
@@ -14,7 +14,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       }, { status: 401 });
     }
 
-    const id = parseInt(params.id);
+    const { id } = await params;
     const body = await request.json();
     const { isEnabled } = body;
 

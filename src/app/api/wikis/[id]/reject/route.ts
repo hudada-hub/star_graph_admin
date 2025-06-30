@@ -3,14 +3,15 @@ import { ResponseUtil } from '@/utils/response';
 import prisma from '@/lib/prisma';
 import { verifyAuth } from '@/utils/auth';
 import { UserRole } from '@/types/user';
-import { WikiStatus } from '@/types/wiki';
+  import { WikiStatus } from '@prisma/client';
 
 // 拒绝Wiki
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     // 验证管理员权限
     const user = await verifyAuth(request);
@@ -20,7 +21,7 @@ export async function POST(
 
     // 获取并更新Wiki状态
     const wiki = await prisma.wiki.update({
-      where: { id: parseInt(params.id) },
+      where: { id:id},
       data: {
         rejectReason: body.rejectReason,
         status: WikiStatus.REJECTED

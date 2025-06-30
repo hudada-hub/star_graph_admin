@@ -4,13 +4,15 @@ import prisma from '@/lib/prisma';
 import { verifyAuth } from '@/utils/auth';
 import { UserRole } from '@/types/user';
 import { UpdateWikiRequest } from '@/types/wiki';
+import { WikiStatus } from '@prisma/client';
 
 // 获取Wiki详情
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
+    const { id } = await params;
     // 验证管理员权限
     const user = await verifyAuth(request);
     if (!user || user.user?.role !== UserRole.SUPER_ADMIN) {
@@ -19,7 +21,7 @@ export async function GET(
 
     // 获取Wiki
     const wiki = await prisma.wiki.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id },
       include: {
         creator: true,
         approvedBy: true
@@ -40,9 +42,10 @@ export async function GET(
 // 更新Wiki
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
+    const { id } = await params;
     // 验证管理员权限
     const user = await verifyAuth(request);
     if (!user || user.user?.role !== UserRole.SUPER_ADMIN) {
@@ -54,8 +57,11 @@ export async function PUT(
 
     // 更新Wiki
     const wiki = await prisma.wiki.update({
-      where: { id: parseInt(params.id) },
-      data: updateData
+      where: { id: id },
+      data: {
+        ...updateData,
+        status: updateData.status || WikiStatus.DRAFT
+      }
     });
 
     if (!wiki) {
@@ -72,9 +78,10 @@ export async function PUT(
 // 删除Wiki
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
+    const { id } = await params;
     // 验证管理员权限
     const user = await verifyAuth(request);
     if (!user || user.user?.role !== UserRole.SUPER_ADMIN) {
@@ -83,7 +90,7 @@ export async function DELETE(
 
     // 软删除Wiki
     const wiki = await prisma.wiki.update({
-      where: { id: parseInt(params.id) },
+      where: { id },
       data: { deletedAt: new Date() }
     });
 

@@ -1,11 +1,4 @@
-// Wiki状态枚举
-export enum WikiStatus {
-  PENDING = 'PENDING',
-  ACTIVE = 'ACTIVE',
-  REJECTED = 'REJECTED',
-  DRAFT = 'DRAFT',
-  PUBLISHED = 'PUBLISHED'
-}
+import { WikiStatus } from "@prisma/client";
 
 // Wiki列表项类型
 export type WikiListItem = {
@@ -84,12 +77,13 @@ export type UpdateWikiRequest = {
   backgroundImage?: string;
   logo?: string;
   primaryColor?: string;
+  textColor?: string;
+  
   allowComments?: boolean;
   isPublic?: boolean;
   enableSearch?: boolean;
   status?: WikiStatus;
   tags?: string[];
-  customDomain?: string;
   contactInfo?: string;
   license?: string;
 } 

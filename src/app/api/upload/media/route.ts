@@ -150,8 +150,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('媒体文件上传失败:', error);
     const errorMessage = error instanceof Error ? error.message : '未知错误';
-    return  ResponseUtil.error(`媒体文件上传失败: ${errorMessage}`, ResponseCode.SERVER_ERROR),
-    { status: 500 };
+    return  ResponseUtil.error(`媒体文件上传失败: ${errorMessage}`, ResponseCode.SERVER_ERROR);
   }
 }
 

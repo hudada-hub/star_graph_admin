@@ -4,11 +4,12 @@ import prisma from '@/lib/prisma';
 // 获取单个分类
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const category = await prisma.articleCategory.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     });
 
     if (!category) {
@@ -43,14 +44,15 @@ export async function GET(
 // 更新分类
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     
     // 检查分类是否存在
     const category = await prisma.articleCategory.findUnique({
-      where: { id: parseInt(params.id) }
+      where: { id: parseInt(id) }
     });
 
     if (!category) {
@@ -91,12 +93,13 @@ export async function PUT(
 // 删除分类
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // 检查分类是否存在
     const category = await prisma.articleCategory.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: parseInt(id) },
       include: {
         articles: true
       }

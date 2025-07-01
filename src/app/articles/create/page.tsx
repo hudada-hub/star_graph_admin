@@ -5,7 +5,12 @@ import { Form, Input, Button, TreeSelect, Select, message } from 'antd';
 import { useRouter } from 'next/navigation';
 import { request } from '@/utils/request';
 import AdminLayout from '../../components/layout/AdminLayout';
-import WangEditor from '@/components/WangEditor';
+import dynamic from 'next/dynamic';
+
+// 动态导入 WangEditor 组件
+const WangEditor = dynamic(() => import('@/components/WangEditor'), {
+  ssr: false // 禁用服务器端渲染
+});
 
 interface ArticleCategory {
   id: number;

@@ -24,12 +24,12 @@ export async function GET() {
 
     // 获取最近7天的用户活跃趋势
     const sevenDaysAgo = dayjs().subtract(6, 'day').startOf('day').toDate();
-    const dailyViews = await prisma.$queryRaw`
-      SELECT DATE("updatedAt") as date, SUM("viewCount") as views
-      FROM "Article"
-      WHERE "updatedAt" >= ${sevenDaysAgo}
-      GROUP BY DATE("updatedAt")
-    `;
+    // const dailyViews = await prisma.$queryRaw`
+    //   SELECT DATE("updatedAt") as date, SUM("viewCount") as views
+    //   FROM "Article"
+    //   WHERE "updatedAt" >= ${sevenDaysAgo}
+    //   GROUP BY DATE("updatedAt")
+    // `;
 
     // 获取最近7天的Wiki创建趋势
     const dailyWikis = await prisma.$queryRaw`
@@ -80,16 +80,7 @@ export async function GET() {
             trend: 'up'
           }
         ],
-        trends: {
-          dailyViews: dailyViews.map(item => ({
-            date: item.date,
-            value: parseInt(item.views) || 0
-          })),
-          dailyWikis: dailyWikis.map(item => ({
-            date: item.date,
-            value: parseInt(item.count) || 0
-          }))
-        }
+       
       },
     });
   } catch (error) {

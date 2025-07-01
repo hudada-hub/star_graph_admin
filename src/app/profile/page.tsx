@@ -26,6 +26,55 @@ export default function ProfilePage() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [basicForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
+  const [uploadProps, setUploadProps] = useState<UploadProps>({
+    name: 'avatar',
+    action: '/api/upload/avatar',
+    accept: 'image/jpeg,image/png,image/gif,image/webp',
+    maxCount: 1,
+    showUploadList: false,
+  });
+
+  useEffect(() => {
+    // 在客户端设置需要 localStorage 的配置
+    setUploadProps(prev => ({
+      ...prev,
+      headers: {
+        authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      beforeUpload: (file) => {
+        const isImage = file.type.startsWith('image/');
+        if (!isImage) {
+          message.error('只能上传图片文件！');
+          return false;
+        }
+
+        const isLt2M = file.size / 1024 / 1024 < 2;
+        if (!isLt2M) {
+          message.error('图片大小不能超过 2MB！');
+          return false;
+        }
+
+        return true;
+      },
+      onChange(info) {
+        if (info.file.status === 'uploading') {
+          setLoading(true);
+        }
+        if (info.file.status === 'done') {
+          setLoading(false);
+          if (info.file.response.code === 0) {
+            message.success('头像上传成功');
+            fetchUserInfo();
+          } else {
+            message.error(info.file.response.message || '头像上传失败');
+          }
+        } else if (info.file.status === 'error') {
+          setLoading(false);
+          message.error('头像上传失败');
+        }
+      },
+    }));
+  }, []);
 
   useEffect(() => {
     fetchUserInfo();
@@ -90,50 +139,6 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // 头像上传配置
-  const uploadProps: UploadProps = {
-    name: 'avatar',
-    action: '/api/upload/avatar',
-    accept: 'image/jpeg,image/png,image/gif,image/webp',
-    maxCount: 1,
-    showUploadList: false,
-    headers: {
-      authorization: `Bearer ${localStorage.getItem('token')}`,
-    },
-    beforeUpload: (file) => {
-      const isImage = file.type.startsWith('image/');
-      if (!isImage) {
-        message.error('只能上传图片文件！');
-        return false;
-      }
-
-      const isLt2M = file.size / 1024 / 1024 < 2;
-      if (!isLt2M) {
-        message.error('图片大小不能超过 2MB！');
-        return false;
-      }
-
-      return true;
-    },
-    onChange(info) {
-      if (info.file.status === 'uploading') {
-        setLoading(true);
-      }
-      if (info.file.status === 'done') {
-        setLoading(false);
-        if (info.file.response.code === 0) {
-          message.success('头像上传成功');
-          fetchUserInfo();
-        } else {
-          message.error(info.file.response.message || '头像上传失败');
-        }
-      } else if (info.file.status === 'error') {
-        setLoading(false);
-        message.error('头像上传失败');
-      }
-    },
   };
 
   const items: TabsProps['items'] = [

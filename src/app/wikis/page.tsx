@@ -30,9 +30,9 @@ import {
 import AdminLayout from '../components/layout/AdminLayout';
 import { request } from '@/utils/request';
 import Link from 'next/link';
-import { WikiListItem, WikiStatus } from '@/types/wiki';
+import { WikiListItem, } from '@/types/wiki';
 import Swal from 'sweetalert2';
-
+import { WikiStatus } from '@prisma/client';
 const { Search } = Input;
 const { Option } = Select;
 

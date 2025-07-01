@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     // 验证子域名是否已存在
     const existingWiki = await prisma.wiki.findFirst({
-      where: { subdomain: createData.subdomain },
+      where: { name: createData.name },
     });
 
     if (existingWiki) {

@@ -4,12 +4,12 @@ import prisma from '@/lib/prisma';
 // 获取文章详情
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
     const { id } = await params;
     const article = await prisma.article.findUnique({
-      where: { id: parseInt(id) },
+      where: { id: id },
       include: {
         category: true
       }

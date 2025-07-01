@@ -22,7 +22,7 @@ import type { UploadFile, UploadProps } from 'antd/es/upload/interface';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import { request } from '@/utils/request';
 import { Notification } from '@/utils/notification';
-import { WikiDetail, WikiStatus, UpdateWikiRequest } from '@/types/wiki';
+import { WikiDetail, UpdateWikiRequest } from '@/types/wiki';
 
 const { TextArea } = Input;
 

@@ -23,10 +23,10 @@ type StatCard = {
 
 interface DashboardData {
   stats: StatCard[];
-  trends: {
-    dailyViews: Array<{ date: string; value: number }>;
-    dailyWikis: Array<{ date: string; value: number }>;
-  };
+  // trends: {
+  //   dailyViews: Array<{ date: string; value: number }>;
+  //   dailyWikis: Array<{ date: string; value: number }>;
+  // };
 }
 
 export default function DashboardPage() {
@@ -61,11 +61,7 @@ export default function DashboardPage() {
       trend: 'up'
     },
   ]);
-  const [trends, setTrends] = useState<DashboardData['trends']>({
-    dailyViews: [],
-    dailyWikis: []
-  });
-
+ 
   // 获取统计数据
   const fetchStats = async () => {
     try {
@@ -74,14 +70,13 @@ export default function DashboardPage() {
         method: 'GET',
       });
       if (response.code === 0 && response.data) {
-        const { stats: newStats, trends: newTrends } = response.data;
+        const { stats: newStats, } = response.data;
         setStats(stats.map((stat, index) => ({
           ...stat,
           value: newStats[index].value,
           change: parseFloat(String(newStats[index].change)),
           trend: newStats[index].trend,
         })));
-        setTrends(newTrends);
       }
     } catch (error) {
       console.error('获取统计数据失败:', error);
@@ -96,7 +91,6 @@ export default function DashboardPage() {
 
   // 活跃用户趋势图配置
   const viewsConfig = {
-    data: trends.dailyViews,
     xField: 'date',
     yField: 'value',
     smooth: true,
@@ -126,7 +120,6 @@ export default function DashboardPage() {
 
   // Wiki创建趋势图配置
   const wikiConfig = {
-    data: trends.dailyWikis,
     xField: 'date',
     yField: 'value',
     smooth: true,

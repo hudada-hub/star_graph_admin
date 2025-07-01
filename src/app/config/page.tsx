@@ -6,7 +6,12 @@ import type { UploadFile, UploadProps } from 'antd/es/upload/interface';
 import Image from 'next/image';
 import { request, getToken } from '@/utils/request';
 import AdminLayout from '../components/layout/AdminLayout';
-import WangEditor from '@/components/WangEditor';
+import dynamic from 'next/dynamic';
+
+// 动态导入 WangEditor 组件
+const WangEditor = dynamic(() => import('@/components/WangEditor'), {
+  ssr: false // 禁用服务器端渲染
+});
 
 // 配置类型枚举
 enum ConfigType {

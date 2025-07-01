@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Card, Form, Input, Button, message, TreeSelect, Select, Switch, Space } from 'antd';
 import { request } from '@/utils/request';
 import AdminLayout from '@/app/components/layout/AdminLayout';
@@ -22,7 +22,8 @@ interface ArticleCategory {
   children?: ArticleCategory[];
 }
 
-export default function ArticleEditPage({ params }: { params: { id: string } }) {
+export default function ArticleEditPage() {
+  const params = useParams<{ id: string }>();
   const router = useRouter();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);

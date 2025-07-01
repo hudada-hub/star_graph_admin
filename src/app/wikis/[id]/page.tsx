@@ -6,7 +6,7 @@ import AdminLayout from '../../components/layout/AdminLayout';
 import { request } from '@/utils/request';
 import Link from 'next/link';
 import { PencilSquareIcon } from '@heroicons/react/24/outline';
-import { WikiDetail, WikiStatus } from '@/types/wiki';
+import { WikiDetail, } from '@/types/wiki';
 
 export default function WikiDetailPage() {
   const params = useParams();

@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
 
   // 从请求头获取token
   const token = getTokenFromHeader(request);
-  console.log('toekn0',token)
+ 
 
   // 如果没有token，返回未认证错误
   if (!token) {

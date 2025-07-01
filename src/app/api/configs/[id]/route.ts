@@ -30,7 +30,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     // 更新配置基本信息
     const config = await prisma.config.update({
-      where: { id },
+      where: { id: Number(id) },
       data: {
         title,
         type,
@@ -46,9 +46,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       case 'TEXTAREA':
       case 'RICH_TEXT':
         await prisma.configTextValue.upsert({
-          where: { configId: id },
+          where: { configId: Number(id) },
           create: {
-            configId: id,
+            configId: Number(id),
             value: value || ''
           },
           update: {
@@ -58,9 +58,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         break;
       case 'IMAGE':
         await prisma.configImageValue.upsert({
-          where: { configId: id },
+          where: { configId: Number(id) },
           create: {
-            configId: id,
+            configId: Number(id)    ,
             url: value || ''
           },
           update: {
@@ -71,14 +71,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       case 'MULTI_IMAGE':
         // 删除旧的值
         await prisma.configMultiImageValue.deleteMany({
-          where: { configId: id }
+          where: { configId: Number(id) }
         });
         // 创建新的值
         const imageUrls = JSON.parse(value || '[]');
         if (imageUrls.length > 0) {
           await prisma.configMultiImageValue.createMany({
             data: imageUrls.map((url: string, index: number) => ({
-              configId: id,
+              configId: Number(id),
               url,
               sort: index
             }))
@@ -91,13 +91,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         if (type === 'MULTI_TEXT') {
           // 删除旧的值
           await prisma.configMultiTextValue.deleteMany({
-            where: { configId: id }
+            where: { configId: Number(id) }
           });
           // 创建新的值
           if (items.length > 0) {
             await prisma.configMultiTextValue.createMany({
               data: items.map((item: any, index: number) => ({
-                configId: id,
+                configId: Number(id),
                 title: item.title,
                 content: item.content,
                 link: item.link,
@@ -108,13 +108,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         } else {
           // 删除旧的值
           await prisma.configMultiContentValue.deleteMany({
-            where: { configId: id }
+            where: { configId: Number(id) }
           });
           // 创建新的值
           if (items.length > 0) {
             await prisma.configMultiContentValue.createMany({
               data: items.map((item: any, index: number) => ({
-                configId: id,
+                configId: Number(id),
                 title: item.title,
                 content: item.content,
                 imageUrl: item.url,
@@ -162,7 +162,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     // 删除配置（关联的值会自动删除，因为我们设置了 onDelete: Cascade）
     await prisma.config.delete({
-      where: { id }
+      where: { id: Number(id) }
     });
 
     return NextResponse.json({
@@ -206,7 +206,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const config = await prisma.config.update({
-      where: { id },
+      where: { id: Number(id) },
       data: { isEnabled }
     });
 

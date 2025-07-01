@@ -21,6 +21,7 @@ type UserListItem = {
   status: string;
   createdAt: string;
   lastLoginAt: string | null;
+  avatar: string | null;
 };
 
 // 编辑用户的类型
@@ -231,7 +232,20 @@ export default function UsersPage() {
                   <tr key={user.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div>
+                        <div className="h-10 w-10 flex-shrink-0">
+                          {user.avatar ? (
+                            <img
+                              src={user.avatar}
+                              alt={user.username}
+                              className="h-10 w-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                              <span>{user.username.charAt(0).toUpperCase()}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
                             {user.username}
                           </div>

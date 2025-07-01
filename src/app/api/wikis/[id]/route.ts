@@ -21,7 +21,7 @@ export async function GET(
 
     // 获取Wiki
     const wiki = await prisma.wiki.findUnique({
-      where: { id },
+      where: { id:Number(id) },
       include: {
         creator: true,
         approvedBy: true
@@ -57,10 +57,9 @@ export async function PUT(
 
     // 更新Wiki
     const wiki = await prisma.wiki.update({
-      where: { id: id },
+      where: { id: Number(id) },
       data: {
         ...updateData,
-        status: updateData.status || WikiStatus.DRAFT
       }
     });
 

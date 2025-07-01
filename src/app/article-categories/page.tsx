@@ -7,6 +7,7 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { request } from '@/utils/request';
 import AdminLayout from '../components/layout/AdminLayout';
+import Swal from 'sweetalert2';  // 导入 Sweetalert2
 
 interface ArticleCategory {
   id: number;
@@ -94,25 +95,60 @@ export default function ArticleCategoriesPage() {
 
   // 处理删除
   const handleDelete = async (id: number) => {
-    Modal.confirm({
+    // 使用 Sweetalert2 显示确认弹窗
+    const result = await Swal.fire({
       title: '确认删除',
-      content: '确定要删除这个分类吗？如果有子分类，子分类也会被删除。',
-      okText: '确定',
-      cancelText: '取消',
-      onOk: async () => {
-        try {
-          const response = await request(`/article-categories/${id}`, {
-            method: 'DELETE',
-          });
-          if (response.code === 0) {
-            message.success('删除成功');
-            fetchCategories();
-          }
-        } catch (error) {
-          message.error('删除失败');
-        }
+      text: '确定要删除这个分类吗？如果有子分类，子分类也会被删除。',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      // 添加漂亮的动画
+      showClass: {
+        popup: 'swal2-show',
+        backdrop: 'swal2-backdrop-show',
+        icon: 'swal2-icon-show'
       },
+      hideClass: {
+        popup: 'swal2-hide',
+        backdrop: 'swal2-backdrop-hide',
+        icon: 'swal2-icon-hide'
+      }
     });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await request(`/article-categories/${id}`, {
+          method: 'DELETE',
+        });
+        
+        if (response.code === 0) {
+          // 显示删除成功的提示
+          await Swal.fire({
+            title: '删除成功！',
+            text: '分类及其子分类已被删除',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false,
+            position: 'top-end',
+            toast: true
+          });
+          
+          fetchCategories();
+        }
+      } catch (error) {
+        // 显示错误提示
+        await Swal.fire({
+          title: '删除失败',
+          text: '操作过程中发生错误，请稍后重试',
+          icon: 'error',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: '确定'
+        });
+      }
+    }
   };
 
   // 处理状态切换

@@ -9,7 +9,8 @@ import {
   EyeOutlined,
   CheckOutlined,
   CloseOutlined,
-  FileImageOutlined
+  FileImageOutlined,
+  UserOutlined
 } from '@ant-design/icons';
 import { 
   Table, 
@@ -85,30 +86,56 @@ export default function WikisPage() {
   };
 
   // 处理删除Wiki
-  const handleDeleteWiki = async (wikiId: number) => {
-    if (!window.confirm('确定要删除这个Wiki吗？')) {
-      return;
-    }
-
-    try {
-      const response = await request(`/wikis/${wikiId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.code === 0) {
-        setWikis(wikis.filter(wiki => wiki.id !== wikiId));
-       
-        api.success({
-          message: 'Wiki删除成功',
-          placement: 'topRight'
-        })
+  const handleDeleteWiki = async (id: number) => {
+    // 使用 Sweetalert2 显示确认弹窗
+    const result = await Swal.fire({
+      title: '确认删除',
+      text: '你确定要删除这个 Wiki 吗？此操作不可恢复！',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      // 添加一些动画效果
+      showClass: {
+        popup: 'animate__animated animate__fadeInDown'
+      },
+      hideClass: {
+        popup: 'animate__animated animate__fadeOutUp'
       }
-    } catch (error) {
-      console.error('删除Wiki失败:', error);
-      api.error({
-        message: '删除Wiki失败',
-        placement: 'topRight'
-      })
+    });
+
+    // 如果用户点击确认
+    if (result.isConfirmed) {
+      try {
+        const response = await request(`/wikis/${id}`, {
+          method: 'DELETE',
+        });
+
+        if (response.code === 0) {
+          // 显示删除成功的提示
+          await Swal.fire({
+            title: '删除成功！',
+            text: 'Wiki已被成功删除',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+          });
+          
+          // 重新加载数据
+          fetchWikis();
+        }
+      } catch (error) {
+        // 显示错误提示
+        await Swal.fire({
+          title: '删除失败',
+          text: '删除Wiki时发生错误，请稍后重试',
+          icon: 'error',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: '确定'
+        });
+      }
     }
   };
 
@@ -211,6 +238,36 @@ export default function WikisPage() {
       ),
     },
     {
+      title: '创建者',
+      dataIndex: 'creator',
+      key: 'creator',
+      width: '150px',
+      render: (creator: any) => (
+        <div className="flex items-center space-x-2">
+          {creator?.avatar ? (
+            <Image
+              src={creator.avatar}
+              alt={creator.username}
+              width={32}
+              height={32}
+              className="rounded-full object-cover"
+              preview={false}
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+              <UserOutlined />
+            </div>
+          )}
+          <div className="flex flex-col">
+            <span className="font-medium text-sm">{creator?.username}</span>
+            {creator?.nickname && (
+              <span className="text-xs text-gray-500">{creator.nickname}</span>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
       title: '图标',
       dataIndex: 'logo',
       key: 'logo',
@@ -248,6 +305,8 @@ export default function WikisPage() {
         switch(status) {
           case 'PUBLISHED': color = 'green'; break;
           case 'PENDING': color = 'orange'; break;
+          case 'REJECTED': color = 'red'; break;
+          case 'DRAFT': color = 'blue'; break;
           default: color = 'red';
         }
         return (
@@ -301,6 +360,9 @@ export default function WikisPage() {
           )}
           <Link href={`/wikis/${record.id}`}>
             <Button icon={<EyeOutlined />}>查看</Button>
+          </Link>   
+          <Link target='_blank' href={`https://star-graph.vercel.app/${record.name}`}>
+            <Button icon={<EyeOutlined />}>查看前台</Button>
           </Link>
           <Link href={`/wikis/${record.id}/edit`}>
             <Button icon={<EditOutlined />}>编辑</Button>

@@ -14,7 +14,7 @@ interface Article {
   content: string;
   summary: string;
   viewCount: number;
-  isPublished: boolean;
+  status: 'DRAFT' | 'PUBLISHED';
   tags: string[];
   category: {
     id: number;
@@ -89,8 +89,8 @@ export default  function ArticleDetailPage() {
               {article.viewCount}
             </Descriptions.Item>
             <Descriptions.Item label="发布状态">
-              <Tag color={article.isPublished ? 'success' : 'default'}>
-                {article.isPublished ? '已发布' : '未发布'}
+              <Tag color={article.status === 'PUBLISHED' ? 'success' : 'default'}>
+                {article.status === 'PUBLISHED' ? '已发布' : '未发布'}
               </Tag>
             </Descriptions.Item>
             <Descriptions.Item label="创建时间">

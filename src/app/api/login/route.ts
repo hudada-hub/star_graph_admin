@@ -25,7 +25,7 @@ export async function POST(request: Request) {
         role: true,
         status: true,
         avatar: true,
-        loginCount: true
+        loginCount: true,
       }
     });
 
@@ -64,7 +64,8 @@ export async function POST(request: Request) {
         id: user.id,
         username: user.username,
         role: user.role,
-        isAdmin: true
+        isAdmin: true,
+        avatar: user.avatar
       },
       JWT_SECRET,
       { expiresIn: '7d' }

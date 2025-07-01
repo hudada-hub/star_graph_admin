@@ -88,6 +88,7 @@ export default function ProfilePage() {
       });
       if (response.code === 0 && response.data) {
         setUserInfo(response.data);
+        localStorage.setItem('userInfo', JSON.stringify(response.data));
         basicForm.setFieldsValue(response.data);
       }
     } catch (error) {

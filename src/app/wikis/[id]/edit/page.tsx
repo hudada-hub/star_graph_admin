@@ -35,8 +35,12 @@ export default function WikiEditPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [logoUrl, setLogoUrl] = useState('');
   const [backgroundUrl, setBackgroundUrl] = useState('');
+  const [menuBgUrl, setMenuBgUrl] = useState('');
+  const [sloganUrl, setSloganUrl] = useState('');
   const [logoLoading, setLogoLoading] = useState(false);
   const [backgroundLoading, setBackgroundLoading] = useState(false);
+  const [menuBgLoading, setMenuBgLoading] = useState(false);
+  const [sloganLoading, setSloganLoading] = useState(false);
 
   useEffect(() => {
     fetchWikiDetail();
@@ -46,13 +50,12 @@ export default function WikiEditPage() {
     if (wiki) {
       setLogoUrl(wiki.logo || '');
       setBackgroundUrl(wiki.backgroundImage || '');
+      setMenuBgUrl(wiki.menuBgImage || '');
+      setSloganUrl(wiki.slogan || '');
       form.setFieldsValue({
         ...wiki,
-        tags: wiki.tags.join(', '),
         allowComments: wiki?.allowComments ? 'true' : 'false',
-        isPublic: wiki?.isPublic ? 'true' : 'false',
         enableSearch: wiki?.enableSearch ? 'true' : 'false',
-        
       });
     }
   }, [wiki, form]);
@@ -104,9 +107,8 @@ export default function WikiEditPage() {
         ...values,
         logo: logoUrl,
         backgroundImage: backgroundUrl,
-        tags: values.tags.split(',').map((tag: string) => tag.trim()).filter(Boolean),
+        menuBgImage: menuBgUrl,
         allowComments: values.allowComments === 'true',
-        isPublic: values.isPublic === 'true',
         enableSearch: values.enableSearch === 'true',
       };
 
@@ -166,10 +168,6 @@ export default function WikiEditPage() {
                 <Input disabled />
               </Form.Item>
 
-              <Form.Item label="子域名" name="subdomain">
-                <Input disabled />
-              </Form.Item>
-
               <Form.Item
                 label="标题"
                 name="title"
@@ -187,6 +185,62 @@ export default function WikiEditPage() {
               </Form.Item>
 
               <Form.Item
+                label="Slogan"
+                name="slogan"
+                extra="支持图片格式：JPG、PNG、GIF、WebP，大小不超过10MB"
+              >
+                <div className="space-y-4">
+                  <Upload
+                    {...uploadProps}
+                    action="/api/upload/media"
+                    onChange={(info) => {
+                      if (info.file.status === 'uploading') {
+                        setSloganLoading(true);
+                      }
+                      if (info.file.status === 'done') {
+                        setSloganLoading(false);
+                        if (info.file.response.code === 0) {
+                          const imageUrl = info.file.response.data.url;
+                          setSloganUrl(imageUrl);
+                          form.setFieldValue('slogan', imageUrl);
+                          message.success('Slogan图片上传成功');
+                        } else {
+                          message.error(info.file.response.message || 'Slogan图片上传失败');
+                        }
+                      } else if (info.file.status === 'error') {
+                        setSloganLoading(false);
+                        message.error('Slogan图片上传失败');
+                      }
+                    }}
+                  >
+                    <Button icon={sloganLoading ? <LoadingOutlined /> : <UploadOutlined />}>
+                      {sloganLoading ? '上传中...' : '上传Slogan图片'}
+                    </Button>
+                  </Upload>
+                  {sloganUrl && (
+                    <div className="relative group">
+                      <img
+                        src={sloganUrl}
+                        alt="Slogan预览"
+                        className="w-[400px] h-[120px] object-contain rounded-lg bg-white"
+                      />
+                      <Button 
+                        size="small"
+                        danger
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          setSloganUrl('');
+                          form.setFieldValue('slogan', '');
+                        }}
+                      >
+                        删除
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </Form.Item>
+
+              <Form.Item
                 label="状态"
                 name="status"
                 rules={[{ required: true, message: '请选择状态' }]}
@@ -198,30 +252,36 @@ export default function WikiEditPage() {
                   <Select.Option value="PUBLISHED">已发布</Select.Option>
                 </Select>
               </Form.Item>
-
-              <Form.Item label="标签" name="tags">
-                <Input placeholder="使用逗号分隔多个标签" />
-              </Form.Item>
-
-              <Form.Item
-                label="许可证"
-                name="license"
-                rules={[{ required: true, message: '请输入许可证' }]}
-              >
-                <Input />
-              </Form.Item>
             </Card>
 
             {/* 外观设置 */}
             <Card title="外观设置" className="mb-6" bordered={false}>
-              <Form.Item label="Logo" name="logo" className="mb-6">
+              <Form.Item 
+                label="Logo" 
+                name="logo" 
+                className="mb-6"
+                extra="支持图片格式：JPG、PNG、GIF、WebP，建议尺寸：64x64，大小不超过10MB"
+              >
                 <div className="flex items-center space-x-4">
                   {logoUrl && (
-                    <img
-                      src={logoUrl}
-                      alt="Logo预览"
-                      className="w-16 h-16 object-cover rounded"
-                    />
+                    <div className="relative group">
+                      <img
+                        src={logoUrl}
+                        alt="Logo预览"
+                        className="w-16 h-16 object-contain rounded-lg bg-white"
+                      />
+                      <Button 
+                        size="small"
+                        danger
+                        className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          setLogoUrl('');
+                          form.setFieldValue('logo', '');
+                        }}
+                      >
+                        删除
+                      </Button>
+                    </div>
                   )}
                   <Upload
                     {...uploadProps}
@@ -253,14 +313,32 @@ export default function WikiEditPage() {
                 </div>
               </Form.Item>
 
-              <Form.Item label="背景图片" name="backgroundImage" className="mb-6">
+              <Form.Item 
+                label="背景图片" 
+                name="backgroundImage" 
+                className="mb-6"
+                extra="支持图片格式：JPG、PNG、GIF、WebP，建议尺寸：1920x1080，大小不超过10MB"
+              >
                 <div className="flex items-center space-x-4">
                   {backgroundUrl && (
-                    <img
-                      src={backgroundUrl}
-                      alt="背景预览"
-                      className="w-32 h-16 object-cover rounded"
-                    />
+                    <div className="relative group">
+                      <img
+                        src={backgroundUrl}
+                        alt="背景预览"
+                        className="w-[320px] h-[180px] object-cover rounded-lg"
+                      />
+                      <Button 
+                        size="small"
+                        danger
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          setBackgroundUrl('');
+                          form.setFieldValue('backgroundImage', '');
+                        }}
+                      >
+                        删除
+                      </Button>
+                    </div>
                   )}
                   <Upload
                     {...uploadProps}
@@ -292,7 +370,76 @@ export default function WikiEditPage() {
                 </div>
               </Form.Item>
 
-              <Form.Item label="主题色" name="primaryColor">
+              <Form.Item
+                label="菜单背景"
+                name="menuBgImage"
+                className="mb-6"
+                extra="支持图片格式：JPG、PNG、GIF、WebP，建议尺寸：400x800，大小不超过10MB"
+              >
+                <div className="flex items-center space-x-4">
+                  {menuBgUrl && (
+                    <div className="relative group">
+                      <img
+                        src={menuBgUrl}
+                        alt="菜单背景预览"
+                        className="w-[200px] h-[400px] object-cover rounded-lg"
+                      />
+                      <Button 
+                        size="small"
+                        danger
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          setMenuBgUrl('');
+                          form.setFieldValue('menuBgImage', '');
+                        }}
+                      >
+                        删除
+                      </Button>
+                    </div>
+                  )}
+                  <Upload
+                    {...uploadProps}
+                    action="/api/upload/media"
+                    onChange={(info) => {
+                      if (info.file.status === 'uploading') {
+                        setMenuBgLoading(true);
+                      }
+                      if (info.file.status === 'done') {
+                        setMenuBgLoading(false);
+                        if (info.file.response.code === 0) {
+                          const imageUrl = info.file.response.data.url;
+                          setMenuBgUrl(imageUrl);
+                          form.setFieldValue('menuBgImage', imageUrl);
+                          message.success('菜单背景上传成功');
+                        } else {
+                          message.error(info.file.response.message || '菜单背景上传失败');
+                        }
+                      } else if (info.file.status === 'error') {
+                        setMenuBgLoading(false);
+                        message.error('菜单背景上传失败');
+                      }
+                    }}
+                  >
+                    <Button icon={menuBgLoading ? <LoadingOutlined /> : <UploadOutlined />}>
+                      {menuBgLoading ? '上传中...' : '上传菜单背景'}
+                    </Button>
+                  </Upload>
+                </div>
+              </Form.Item>
+
+              <Form.Item 
+                label="主题色" 
+                name="primaryColor"
+                extra="选择主题的主要颜色"
+              >
+                <Input type="color" className="w-20" />
+              </Form.Item>
+
+              <Form.Item 
+                label="文字颜色" 
+                name="textColor"
+                extra="选择主要文字的颜色"
+              >
                 <Input type="color" className="w-20" />
               </Form.Item>
             </Card>

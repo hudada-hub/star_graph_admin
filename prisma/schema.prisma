@@ -71,6 +71,7 @@ model User {
   approvedWikis  Wiki[]    @relation("ApprovedWikis")
   comments       Comment[]
   articles       Article[]
+  templates      Template[]
 
   commentLikes   CommentLike[]
   wikiTemplates  WikiTemplate[]    
@@ -423,5 +424,23 @@ model WikiTemplateLike {
   user       User        @relation(fields: [userId], references: [id])
 
   @@unique([userId, templateId])
+}
+
+model Template {
+  id          Int      @id @default(autoincrement())
+  name        String   // 模板名称
+  description String   // 模板描述
+  icon        String?  // 模板图标
+  preview     String?  // 预览图
+  content     String   // 模板内容
+  type        String   // 模板类型
+  tags        String[] // 标签
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  creatorId   Int      // 创建者ID
+  creator     User     @relation(fields: [creatorId], references: [id])
+  isPublic    Boolean  @default(true) // 是否公开
+  status      String   @default("active") // 状态：active, disabled
+  usageCount  Int      @default(0) // 使用次数
 }
 

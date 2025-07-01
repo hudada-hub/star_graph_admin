@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { request, setToken, getToken } from '@/utils/request';
 import { ApiResponse } from '@/utils/response';
 import { LoginRequest, LoginResponseData } from '@/types/auth';
+import { getUserAuth } from '@/utils/client-auth';
+import { jwtDecode } from 'jwt-decode';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -38,6 +40,16 @@ const LoginPage: React.FC = () => {
   
       if (response.code === 0 && response.data) {
         setToken(response.data.token);
+
+  
+        // 解析token数据
+        const decodedToken:{
+          id: number;
+          username: string;
+          role: string;
+          avatar: string;
+        } = jwtDecode(response.data.token);
+        localStorage.setItem('userInfo', JSON.stringify(decodedToken));
         router.push('/dashboard');
       } else {
         setError(response.message || '登录失败，请检查用户名和密码');

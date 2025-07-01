@@ -15,12 +15,22 @@ export async function GET(request: NextRequest) {
       }, { status: 403 });
     }
 
-    // 获取Wiki列表
+    // 获取Wiki列表，包含创建者信息
     const wikis = await prisma.wiki.findMany({
       where: { deletedAt: null },
       orderBy: {
         createdAt: 'desc',
       },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            username: true,
+            nickname: true,
+            avatar: true,
+          }
+        }
+      }
     });
 
     return NextResponse.json({
@@ -56,7 +66,10 @@ export async function POST(request: NextRequest) {
 
     // 验证子域名是否已存在
     const existingWiki = await prisma.wiki.findFirst({
-      where: { name: createData.name },
+      where: { 
+        name: createData.name,
+        deletedAt: null
+      },
     });
 
     if (existingWiki) {
@@ -72,6 +85,16 @@ export async function POST(request: NextRequest) {
       data: {
         ...createData,
         creatorId: userData.user?.id
+      },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            username: true,
+            nickname: true,
+            avatar: true,
+          }
+        }
       }
     });
 

@@ -4,9 +4,13 @@ import { useState } from 'react';
 import { BellIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import Swal from 'sweetalert2';
+import { getUserAuth } from '@/utils/client-auth';
+import { jwtDecode } from 'jwt-decode';
+import Image from 'next/image';
 
 export default function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const { userInfo } = getUserAuth();
 
   return (
     <header className="bg-white shadow-sm">
@@ -27,7 +31,8 @@ export default function Header() {
               className="flex items-center rounded-full text-sm focus:outline-none"
             >
               <span className="sr-only">打开用户菜单</span>
-              <UserCircleIcon className="h-8 w-8 text-gray-400" />
+            
+              <Image src={userInfo?.avatar} width={32} height={32} alt={userInfo?.username} className="h-8 w-8 rounded-full" />
             </button>
 
             {/* 下拉菜单 */}

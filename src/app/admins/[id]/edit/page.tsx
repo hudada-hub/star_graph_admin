@@ -138,8 +138,8 @@ export default function AdminEditPage() {
               defaultValue={admin.role}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             >
-              <option value="super_admin">超级管理员</option>
-              <option value="reviewer">审核员</option>
+              <option value="SUPER_ADMIN">超级管理员</option>
+              <option value="REVIEWER">审核员</option>
             </select>
           </div>
 

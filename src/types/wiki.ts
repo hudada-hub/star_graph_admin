@@ -24,11 +24,14 @@ export type WikiDetail = {
   subdomain: string;
   title: string;
   description: string;
+  slogan?: string;
   keywords?: string;
   metaDescription?: string;
   backgroundImage?: string;
+  menuBgImage?: string;
   logo?: string;
   primaryColor: string;
+  textColor?: string;
   allowComments?: boolean;
   isPublic?: boolean;
   enableSearch?: boolean;
@@ -75,6 +78,7 @@ export type UpdateWikiRequest = {
   keywords?: string;
   metaDescription?: string;
   backgroundImage?: string;
+  menuBgImage?: string;
   logo?: string;
   primaryColor?: string;
   textColor?: string;

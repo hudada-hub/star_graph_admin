@@ -1,4 +1,3 @@
- 
 'use client'
 import { useState, useEffect } from 'react';
 import { 
@@ -23,6 +22,7 @@ type AdminListItem = {
   createdAt: string;
   lastLoginAt: string | null;
   loginCount: number;
+  avatar: string | null;  // 添加头像字段
 };
 
 export default function AdminsPage() {
@@ -156,7 +156,20 @@ export default function AdminsPage() {
                   <tr key={admin.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div>
+                        <div className="h-10 w-10 flex-shrink-0">
+                          {admin.avatar ? (
+                            <img
+                              src={admin.avatar}
+                              alt={admin.username}
+                              className="h-10 w-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-purple-500 flex items-center justify-center text-white">
+                              <span>{admin.username.charAt(0).toUpperCase()}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
                             {admin.username}
                           </div>
@@ -170,20 +183,20 @@ export default function AdminsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                        admin.role === 'super_admin' 
+                        admin.role === 'SUPER_ADMIN' 
                           ? 'bg-purple-100 text-purple-800'
                           : 'bg-blue-100 text-blue-800'
                       }`}>
-                        {admin.role === 'super_admin' ? '超级管理员' : '审核员'}
+                        {admin.role === 'SUPER_ADMIN' ? '超级管理员' : '审核员'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                        admin.status === 'active'
+                        admin.status === 'ACTIVE'
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {admin.status === 'active' ? '正常' : '禁用'}
+                        {admin.status === 'ACTIVE' ? '正常' : '禁用'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

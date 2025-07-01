@@ -9,7 +9,7 @@ export async function GET(
   try {
     const { id } = await params;
     const article = await prisma.article.findUnique({
-      where: { id: id },
+      where: { id: Number(id) },
       include: {
         category: true
       }
@@ -53,12 +53,12 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const { title, categoryId, content, summary, isPublished, tags } = body;
+    const { title, categoryId, content, summary, status, tags } = body;
 
       const {id} = await params;
     // 检查文章是否存在
     const article = await prisma.article.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: Number(id) }
     });
 
     if (!article) {
@@ -77,6 +77,7 @@ export async function PUT(
         categoryId,
         content,
         summary,
+        status,
         updatedAt: new Date()
       }
     });
@@ -105,7 +106,7 @@ export async function DELETE(
     const { id } = await params;
     // 检查文章是否存在
     const article = await prisma.article.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: Number(id) }
     });
 
     if (!article) {
@@ -118,7 +119,7 @@ export async function DELETE(
 
     // 删除文章
     await prisma.article.delete({
-      where: { id: article.id }
+      where: { id: Number(id) }
     });
 
     return NextResponse.json({

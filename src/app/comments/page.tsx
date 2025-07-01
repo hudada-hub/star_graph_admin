@@ -32,6 +32,17 @@ interface Comment {
       username: string;
     };
   };
+  template?: {
+    id: number;
+    wikiId: number;
+    moduleName: string;
+    wiki: {
+      id: number;
+      name: string;
+      title: string;
+    };
+    detailName: string;
+  };
 }
 
 interface SearchParams {
@@ -39,6 +50,21 @@ interface SearchParams {
   isDeleted?: boolean;
   articleId?: number;
   userId?: number;
+  page?: number;
+  pageSize?: number;
+}
+
+interface PaginationData {
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+interface CommentResponse {
+  items: Comment[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export default function CommentsPage() {
@@ -47,20 +73,40 @@ export default function CommentsPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
-  const [searchParams, setSearchParams] = useState<SearchParams>({});
+  const [searchParams, setSearchParams] = useState<SearchParams>({
+    page: 1,
+    pageSize: 10
+  });
+  const [pagination, setPagination] = useState<PaginationData>({
+    total: 0,
+    page: 1,
+    pageSize: 10
+  });
 
   // 获取评论列表
   const fetchComments = async (params: SearchParams = {}) => {
     try {
       setLoading(true);
-      const response = await request<Comment[]>('/comments', {
+      const response = await request<CommentResponse>('/comments', {
         method: 'POST',
-        body: JSON.stringify(params),
+        body: JSON.stringify({
+          ...params,
+          page: params.page || 1,
+          pageSize: params.pageSize || 10
+        }),
       });
-      if (response.code === 0) {
-        setComments(response.data || []);
+
+      if (response.code === 0 && response.data) {
+        const { items, total, page, pageSize } = response.data;
+        setComments(items);
+        setPagination({
+          total,
+          page,
+          pageSize
+        });
       }
     } catch (error) {
+      console.error('获取评论列表失败:', error);
       message.error('获取评论列表失败');
     } finally {
       setLoading(false);
@@ -68,20 +114,37 @@ export default function CommentsPage() {
   };
 
   useEffect(() => {
-    fetchComments();
+    fetchComments(searchParams);
   }, []);
 
   // 处理搜索
   const handleSearch = (values: SearchParams) => {
-    setSearchParams(values);
-    fetchComments(values);
+    const newParams = { 
+      ...values, 
+      page: 1,
+      pageSize: pagination.pageSize 
+    };
+    setSearchParams(newParams);
+    fetchComments(newParams);
   };
 
   // 重置搜索
   const handleReset = () => {
     form.resetFields();
-    setSearchParams({});
-    fetchComments();
+    const newParams = { page: 1, pageSize: pagination.pageSize };
+    setSearchParams(newParams);
+    fetchComments(newParams);
+  };
+
+  // 处理分页变化
+  const handleTableChange = (newPagination: any) => {
+    const newParams = {
+      ...searchParams,
+      page: newPagination.current,
+      pageSize: newPagination.pageSize
+    };
+    setSearchParams(newParams);
+    fetchComments(newParams);
   };
 
   // 批量处理评论状态
@@ -163,20 +226,26 @@ export default function CommentsPage() {
       width: '10%',
     },
     {
-      title: '文章',
-      dataIndex: ['article', 'title'],
+      title: '评论地址',
       key: 'articleTitle',
       width: '15%',
       ellipsis: true,
-      render: (title: string, record: Comment) => (
-        title ? (
+      render: (record: Comment) => (
+        record.article?.title ? (
           <Button
             type="link"
             onClick={() => router.push(`/articles/${record.article?.id}`)}
           >
-            {title}
+            {record.article?.title}
           </Button>
-        ) : '已删除'
+        ) : record.template?.wikiId ?? (
+          <Button
+            type="link"
+            onClick={() => router.push(`/wikis/${record.template?.wikiId}/${record.template?.moduleName}/${record.template?.detailName}`)}
+          >
+            {record.template?.moduleName}{record.template?.detailName}
+            </Button>
+        ) 
       ),
     },
     {
@@ -190,8 +259,8 @@ export default function CommentsPage() {
     },
     {
       title: '点赞数',
-      dataIndex: 'likes',
-      key: 'likes',
+      dataIndex: 'likeCount',
+      key: 'likeCount',
       width: '8%',
     },
     {
@@ -300,9 +369,15 @@ export default function CommentsPage() {
             rowKey="id"
             loading={loading}
             pagination={{
+              current: pagination.page,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
               showSizeChanger: true,
               showQuickJumper: true,
               showTotal: (total) => `共 ${total} 条`,
+              onChange: (page, pageSize) => {
+                handleTableChange({ current: page, pageSize });
+              }
             }}
             rowSelection={{
               selectedRowKeys,

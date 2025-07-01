@@ -10,6 +10,7 @@ import { PencilSquareIcon } from '@heroicons/react/24/outline';
 type AdminDetail = {
   id: number;
   username: string;
+  nickname: string | null;
   email: string | null;
   role: string;
   status: string;
@@ -17,6 +18,7 @@ type AdminDetail = {
   lastLoginAt: string | null;
   loginCount: number;
   lastLoginIp: string | null;
+  avatar: string | null;
 };
 
 export default function AdminDetailPage() {
@@ -84,9 +86,29 @@ export default function AdminDetailPage() {
         {/* 详细信息 */}
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:px-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              基本信息
-            </h3>
+            <div className="flex items-center">
+              <div className="h-20 w-20 flex-shrink-0">
+                {admin.avatar ? (
+                  <img
+                    src={admin.avatar}
+                    alt={admin.username}
+                    className="h-20 w-20 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-20 w-20 rounded-full bg-purple-500 flex items-center justify-center text-white text-2xl">
+                    <span>{admin.username.charAt(0).toUpperCase()}</span>
+                  </div>
+                )}
+              </div>
+              <div className="ml-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  基本信息
+                </h3>
+                <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                  管理员个人详细信息
+                </p>
+              </div>
+            </div>
           </div>
           <div className="border-t border-gray-200">
             <dl>
@@ -97,12 +119,18 @@ export default function AdminDetailPage() {
                 </dd>
               </div>
               <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">昵称</dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  {admin.nickname || '未设置'}
+                </dd>
+              </div>
+              <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">邮箱</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                   {admin.email || '未设置'}
                 </dd>
               </div>
-              <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">角色</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                   <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
@@ -114,15 +142,15 @@ export default function AdminDetailPage() {
                   </span>
                 </dd>
               </div>
-              <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">状态</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                   <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                    admin.status === 'active'
+                    admin.status === 'ACTIVE'
                       ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
                   }`}>
-                    {admin.status === 'active' ? '正常' : '禁用'}
+                    {admin.status === 'ACTIVE' ? '正常' : '禁用'}
                   </span>
                 </dd>
               </div>

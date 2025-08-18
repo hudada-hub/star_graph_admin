@@ -8,10 +8,15 @@ import { WikiStatus } from '@prisma/client';
 // 审核通过Wiki
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: number }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    const wikiId = parseInt(id, 10);
+    
+    if (isNaN(wikiId)) {
+      return ResponseUtil.badRequest('无效的Wiki ID');
+    }
     // 验证管理员权限
     const user = await verifyAuth(request);
     if (!user || user.user?.role !== UserRole.SUPER_ADMIN) {
@@ -20,7 +25,7 @@ export async function POST(
 
     // 获取并更新Wiki状态
     const wiki = await prisma.wiki.update({
-      where: { id:id },
+      where: { id: wikiId },
       data: {
         status: WikiStatus.DRAFT,
         approvedAt: new Date(),

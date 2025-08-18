@@ -17,6 +17,11 @@ const nextConfig: NextConfig = {
             hostname: 'star-graph.oss-cn-beijing.aliyuncs.com',
             pathname: '/**',
           },
+          {
+            protocol: 'https',
+            hostname: 'study-platform-1258739349.cos.ap-guangzhou.myqcloud.com',
+            pathname: '/**',
+          },
         ],
       },
 };

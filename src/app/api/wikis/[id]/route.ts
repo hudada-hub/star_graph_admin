@@ -9,10 +9,16 @@ import { WikiStatus } from '@prisma/client';
 // 获取Wiki详情
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: number }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    const wikiId = parseInt(id, 10);
+    
+    if (isNaN(wikiId)) {
+      return ResponseUtil.badRequest('无效的Wiki ID');
+    }
+    
     // 验证管理员权限
     const user = await verifyAuth(request);
     if (!user || user.user?.role !== UserRole.SUPER_ADMIN) {
@@ -21,7 +27,7 @@ export async function GET(
 
     // 获取Wiki
     const wiki = await prisma.wiki.findUnique({
-      where: { id:Number(id) },
+      where: { id: wikiId },
       include: {
         creator: true,
         approvedBy: true
@@ -42,10 +48,16 @@ export async function GET(
 // 更新Wiki
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: number }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    const wikiId = parseInt(id, 10);
+    
+    if (isNaN(wikiId)) {
+      return ResponseUtil.badRequest('无效的Wiki ID');
+    }
+    
     // 验证管理员权限
     const user = await verifyAuth(request);
     if (!user || user.user?.role !== UserRole.SUPER_ADMIN) {
@@ -57,7 +69,7 @@ export async function PUT(
 
     // 更新Wiki
     const wiki = await prisma.wiki.update({
-      where: { id: Number(id) },
+      where: { id: wikiId },
       data: {
         ...updateData,
       }
@@ -77,10 +89,16 @@ export async function PUT(
 // 删除Wiki
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: number }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    const wikiId = parseInt(id, 10);
+    
+    if (isNaN(wikiId)) {
+      return ResponseUtil.badRequest('无效的Wiki ID');
+    }
+    
     // 验证管理员权限
     const user = await verifyAuth(request);
     if (!user || user.user?.role !== UserRole.SUPER_ADMIN) {
@@ -89,7 +107,7 @@ export async function DELETE(
 
     // 软删除Wiki
     const wiki = await prisma.wiki.update({
-      where: { id },
+      where: { id: wikiId },
       data: { deletedAt: new Date() }
     });
 

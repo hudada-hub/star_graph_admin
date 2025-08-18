@@ -8,10 +8,16 @@ import { UserRole } from '@/types/user';
 // 拒绝Wiki
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: number }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    const wikiId = parseInt(id, 10);
+    
+    if (isNaN(wikiId)) {
+      return ResponseUtil.badRequest('无效的Wiki ID');
+    }
+    
     const body = await request.json();
     // 验证管理员权限
     const user = await verifyAuth(request);
@@ -21,7 +27,7 @@ export async function POST(
 
     // 获取并更新Wiki状态
     const wiki = await prisma.wiki.update({
-      where: { id:id},
+      where: { id: wikiId },
       data: {
         rejectReason: body.rejectReason,
         status: WikiStatus.REJECTED

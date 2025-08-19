@@ -1,10 +1,10 @@
 module.exports = {
   apps: [
     {
-      name: "next-app",       // 应用名称
+      name: "next-app-admin",       // 应用名称
       script: "npm",           // 使用 npm 作为启动器
       args: "start",          // 运行 npm start
-      cwd: "/root/star_graph", // 应用绝对路径
+      cwd: "/root/star_graph_admin", // 应用绝对路径
       instances: "max",        // 使用所有 CPU 核心
       autorestart: true,       // 崩溃自动重启
       watch: false,            // 禁用文件监视
